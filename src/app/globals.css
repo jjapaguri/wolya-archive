@@ -82,3 +82,22 @@ body {
     animation: none;
   }
 }
+
+/* ── 모바일 전용 (/m) ───────────────────────────────────────── */
+
+/* 가로 스크롤 상품 목록의 스크롤바 숨김 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 히어로 타이틀 하단의 반사(거울) 텍스트 */
+.mirror-text-bottom {
+  transform: scaleY(-1);
+  mask-image: linear-gradient(to bottom, transparent 20%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 20%, black 100%);
+}
