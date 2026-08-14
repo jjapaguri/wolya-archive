@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0d0b0a;
+  --bg-soft: #151210;
+  --fg: #f5f2ed;
+  --accent: #703d1f;
+  --accent-dim: #2a1a12;
+  --border: rgba(245, 242, 237, 0.15);
+}
+
+@theme {
+  /* The original design's single desktop breakpoint is 1200px. Redefining
+     the default `lg` slot (rather than adding a new custom breakpoint)
+     keeps it correctly ordered against sm/md in the generated cascade —
+     Tailwind v4 doesn't reliably sort custom/arbitrary breakpoints by
+     value against the default ones, but it does sort the default slots
+     themselves correctly. */
+  --breakpoint-lg: 1200px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-fg: var(--fg);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-border: var(--border);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-kr: var(--font-kr);
+  --font-maruburi: var(--font-maruburi);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.word-keep-all {
+  word-break: keep-all;
+}
+
+@keyframes scrollRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.scroll-row-top {
+  animation: scrollRight 40s linear infinite;
+}
+
+.scroll-row-bottom {
+  animation: scrollLeft 45s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-row-top,
+  .scroll-row-bottom {
+    animation: none;
+  }
+}
