@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import DesktopViewLink from "./DesktopViewLink";
 
 function Row({
   label,
@@ -84,13 +85,7 @@ export default function MobileFooter() {
       </div>
 
       <div className="mb-6 text-center">
-        {/* 미들웨어가 ?view=desktop 을 읽어 쿠키에 저장하고 데스크톱 화면으로 보낸다. */}
-        <a
-          href="/?view=desktop"
-          className="text-[9px] tracking-[0.15em] text-fg/40 uppercase underline underline-offset-4 active:text-fg"
-        >
-          데스크톱 버전으로 보기
-        </a>
+        <DesktopViewLink />
       </div>
 
       <div className="text-center text-[9px] tracking-[0.05em] text-fg/30">
