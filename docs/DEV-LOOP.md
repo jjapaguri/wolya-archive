@@ -88,8 +88,16 @@ Lightsail 은 2GB 에 PostgreSQL·Next·PM2 가 함께 산다. 거기서 빌드�
 
 `AGENTS.md` 4절(결제·환불 실행, 고객 발송, DB 파괴적 변경, 가격 결정)은 자동화에도 그대로 적용된다.
 
-## 지금 막혀 있는 것
+## 가동 상태 (2026-08-18)
 
-**서버 cron 이 멈춰 있으면 병합돼도 배포되지 않는다.** `ops/auto_deploy.sh` 를 cron 이 부르지 못하면
-main 에 쌓이기만 한다. 개발 루프를 켜기 전에 서버 cron 부터 살릴 것.
-확인: `ssh wolya "systemctl is-active cron; tail -5 ~/ops/logs/\$(date +%F).log"`
+전 구간이 실제로 한 바퀴 돌았다.
+
+```
+커밋 → CI 초록불 → 서버 auto_deploy 가 10분 내 배포 → 피드에 성공 알림
+```
+
+확인된 배포: `a251f43` 까지 자동 반영, PM2 online, 메모리 24%.
+`mobile-layout` 병합(PR #1)도 이 경로로 나갔고 `https://archive-wolya.com/m` 이 정상 응답한다.
+
+남은 것은 **dev-loop 첫 자동 실행**(매일 03:00 KST)이다. 수동으로 당겨보려면
+Actions → Dev Loop → Run workflow.
