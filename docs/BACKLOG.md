@@ -51,6 +51,14 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
+- [ ] `auto` **`robots.ts` / `sitemap.ts` 가 없다 — 검색 노출이 안 된다**
+  `src/app/robots.ts` 와 `src/app/sitemap.ts` 를 Next 16 App Router 방식으로 만든다.
+  sitemap 에는 `/` 와 `/m` 을 넣되, `/m` 은 `m/layout.tsx` 에서 canonical 이 `/` 로 잡혀 있으므로
+  중복 색인되지 않게 주의한다.
+  **이 항목은 화면에 보이지 않고 파일 2개뿐이라 개발 루프의 첫 검증용으로 맨 위에 두었다.**
+
+
+
 - [ ] `auto` **상품 카드에서 상세로 가는 경로를 만든다**
   `ProductCard.tsx` 에 링크도 `onClick` 도 없다. 상품을 눌러도 아무 일이 없다.
   `/product/[slug]` **와 `/m/product/[slug]` 를 함께** 만들고 양쪽 카드를 각각 감싼다.
@@ -76,8 +84,6 @@
   `opengraph-image.tsx` 로 이미지도 함께 만든다.
   `src/app/m/layout.tsx` 에도 자체 metadata 가 있다 — **양쪽 다 손봐야 한다.**
   모바일 쪽 `alternates.canonical` 이 `/` 로 잡혀 있는 것은 의도된 것이니 건드리지 않는다.
-
-- [ ] `auto` **`robots.ts` / `sitemap.ts` 가 없다** — 검색 노출이 안 된다
 
 - [ ] `auto` **푸터 법적 문서 3개가 전부 `href="#"` 다**
   `이용약관` · `개인정보처리방침` · `교환/환불 규정`.
