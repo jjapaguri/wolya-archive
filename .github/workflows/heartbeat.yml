@@ -1,0 +1,82 @@
+name: heartbeat
+
+# 죽은 사람 스위치 — 서버 cron 이 멈췄는지 밖에서 본다.
+#
+# 왜 필요한가: 서버 안에서는 "cron 이 멈췄다" 를 원리상 감지할 수 없다.
+# 감지하는 코드도 cron 이 돌려야 하기 때문이다.
+# 2026-08-18 에 cron 잡이 전부 exit 126 으로 죽었는데 사이트는 계속 200 이었고,
+# 32분간 아무도 몰랐다. 사이트 감시로는 이걸 잡을 수 없다.
+#
+# 동작: ops/run.sh 가 매 cron 틱마다 heartbeat.txt 에 시각을 찍는다.
+#       여기서 30분마다 읽어 너무 낡았으면 워크플로를 실패시킨다.
+#       실패하면 GitHub 이 레포 소유자에게 메일을 보낸다.
+#
+# heartbeat 의 뜻은 "자동화가 동작 중" 이 아니라 "cron 이 떴다" 이다.
+# STOP 파일이나 킬스위치로 자동화를 꺼둬도 이 신호는 계속 나온다 — 그게 맞다.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: heartbeat
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: 서버 cron 생존 확인
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: heartbeat 확인
+        env:
+          URL: https://archive-wolya.com/ops-feed/heartbeat.txt
+          # cron 최단 주기가 5분이다. 20분이면 틱 3번을 놓친 것 —
+          # 일시적 지연이 아니라 진짜로 멈춘 것으로 본다.
+          STALE_MINUTES: '20'
+        run: |
+          set -uo pipefail
+
+          reason=''
+
+          attempt() {
+            body="$(curl -fsS --max-time 15 "$URL" 2>&1)" \
+              || { reason="피드 조회 실패 ($body)"; return 1; }
+
+            ts="$(printf '%s' "$body" | head -1 | tr -d '\r')"
+            epoch="$(date -d "$ts" +%s 2>/dev/null)" \
+              || { reason="타임스탬프를 해석할 수 없음 ('$ts')"; return 1; }
+
+            age=$(( ($(date +%s) - epoch) / 60 ))
+            if [ "$age" -gt "$STALE_MINUTES" ]; then
+              reason="heartbeat 가 ${age}분 낡았다 (기준 ${STALE_MINUTES}분, 마지막 기록 $ts)"
+              return 1
+            fi
+
+            echo "정상 — ${age}분 전에 cron 이 돌았다 ($ts)"
+            return 0
+          }
+
+          # 네트워크 순간 장애로 우는 늑대가 되지 않게 3번까지 본다.
+          # 진짜로 멈췄다면 20초 뒤에도 낡아 있다.
+          for i in 1 2 3; do
+            if attempt; then exit 0; fi
+            echo "시도 $i/3 실패 — $reason"
+            [ "$i" -lt 3 ] && sleep 20
+          done
+
+          echo "::error title=서버 cron 정지 의심::$reason"
+          cat <<EOF
+
+          ─────────────────────────────────────────────
+           서버 cron 이 멈춘 것으로 보입니다.
+
+           확인:
+             ssh wolya 'systemctl is-active cron; tail -20 ~/ops/logs/\$(date +%F).log'
+             ssh wolya 'grep CRON /var/log/syslog | tail -20'
+
+           흔한 원인은 ops/README.md 의 "cron 이 멈췄을 때" 참고.
+          ─────────────────────────────────────────────
+          EOF
+          exit 1

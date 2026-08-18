@@ -33,6 +33,23 @@ mkdir -p "$LOG_DIR"
 # lib.sh 를 source 하지 않는 이유: 이 파일은 lib.sh 가 깨져 있어도 동작해야 한다.
 note() { printf '%s [run] %s\n' "$(date '+%F %T')" "$*" >> "$LOG_DIR/$(date +%F).log"; }
 
+# ── heartbeat (죽은 사람 스위치) ────────────────────────────
+# 서버 안에서는 "cron 이 멈췄다" 를 감지할 수 없다. 감지하는 코드도 cron 이 돌려야 하니까.
+# 그래서 밖에서 본다: 매 틱마다 시각을 공개 파일에 찍고,
+# GitHub Actions 가 30분마다 읽어 낡았으면 실패시킨다(.github/workflows/heartbeat.yml).
+#
+# 대상 스크립트를 실행하기 "전에", guard() 보다 앞서 찍는다.
+# 이 값의 뜻은 "자동화가 동작 중" 이 아니라 "cron 이 떴다" 이다.
+# STOP 파일이나 킬스위치로 자동화를 꺼둔 동안에도 cron 자체는 살아있어야 하고,
+# 그걸 껐다는 이유로 죽은 사람 스위치가 울리면 안 된다.
+FEED_DIR="${FEED_DIR:-/var/www/ops-feed}"
+if [ -d "$FEED_DIR" ] && [ -w "$FEED_DIR" ]; then
+  # 임시 파일에 쓰고 mv — 읽는 쪽이 반쯤 쓰인 파일을 보지 않게 한다.
+  if date -Iseconds > "$FEED_DIR/.heartbeat.tmp" 2>/dev/null; then
+    mv -f "$FEED_DIR/.heartbeat.tmp" "$FEED_DIR/heartbeat.txt" 2>/dev/null || true
+  fi
+fi
+
 target="$OPS_DIR/$name.sh"
 if [ ! -f "$target" ]; then
   note "$name — 스크립트 없음 ($target)"

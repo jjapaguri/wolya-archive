@@ -120,3 +120,7 @@ DB 스키마는 전부 섰고 데이터는 0건. **앱↔DB 연결층이 없는 
 2026-08-18 cron 중단(11:28~11:59): `ops/*.sh` 가 git에 100644 로 커밋돼 있어
 자동배포의 `git reset --hard` 가 `setup.sh` 로 준 실행 비트를 벗겼다 — cron 잡이 전부
 exit 126 로 죽고 stderr 가 `/dev/null` 이라 무증상. 인덱스 모드를 100755 로 고정해 해결.
+
+죽은 사람 스위치 추가(2026-08-18): `run.sh` 가 매 cron 틱마다 `/ops-feed/heartbeat.txt` 에
+시각을 찍고, `.github/workflows/heartbeat.yml` 이 30분마다 읽어 20분 이상 낡으면 실패 →
+GitHub 이 소유자에게 메일. 서버 안에서는 cron 정지를 감지할 수 없어 밖에 둔 것이다.
