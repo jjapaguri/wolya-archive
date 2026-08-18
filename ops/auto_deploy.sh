@@ -44,22 +44,36 @@ if [ "$count" -ge "$max" ]; then
   alert warn "오늘 자동배포 한도($max) 도달 — 배포 보류 (${remote:0:7})"; exit 0
 fi
 
-# ── CI 초록불 확인 ──────────────────────────────────────────
-concl=$(curl -fsS --max-time 20 \
-  "https://api.github.com/repos/$REPO/actions/runs?head_sha=$remote&per_page=10" 2>/dev/null \
-  | python3 -c '
+# ── CI 초록불 확인 ────────────────────────────────────────
+# 주의: GitHub 은 기본 GITHUB_TOKEN 으로 만든 커밋에 워크플로를 돌리지 않는다.
+# dev-loop 의 자동 병합 잡이 GITHUB_TOKEN 으로 squash merge 하므로 그 커밋에는
+# 실행 기록이 하나도 없다. 그래서 기록이 없으면 그 커밋을 만든 PR 의 head 커밋 CI 를 본다
+# (병합 전에 실제로 검증된 바로 그 코드다). 판정 로직은 ops/ci_status.py.
+api() { curl -fsS --max-time 20 "https://api.github.com/repos/$REPO/$1" 2>/dev/null; }
+
+api "actions/runs?head_sha=$remote&per_page=20" > "$STATE_DIR/ci_direct.json" || echo '{}' > "$STATE_DIR/ci_direct.json"
+api "commits/$remote/pulls"                     > "$STATE_DIR/ci_prs.json"    || echo '[]' > "$STATE_DIR/ci_prs.json"
+
+pr_head=$(python3 -c '
 import json,sys
-try: d=json.load(sys.stdin)
-except Exception: print("unreadable"); sys.exit()
-runs=d.get("workflow_runs",[])
-if not runs: print("none"); sys.exit()
-if any(r["status"]!="completed" for r in runs): print("running"); sys.exit()
-print("success" if all(r["conclusion"]=="success" for r in runs) else "failure")' 2>/dev/null)
+try: prs=json.load(open(sys.argv[1]))
+except Exception: sys.exit()
+m=[p for p in prs if p.get("merged_at")]
+print(m[0]["head"]["sha"] if m else "")' "$STATE_DIR/ci_prs.json" 2>/dev/null)
+
+if [ -n "$pr_head" ]; then
+  api "actions/runs?head_sha=$pr_head&per_page=20" > "$STATE_DIR/ci_head.json" || echo '{}' > "$STATE_DIR/ci_head.json"
+else
+  echo '{}' > "$STATE_DIR/ci_head.json"
+fi
+
+concl=$(python3 "${OPS_SRC_DIR:-$(dirname "$0")}/ci_status.py" \
+          "$STATE_DIR/ci_direct.json" "$STATE_DIR/ci_prs.json" "$STATE_DIR/ci_head.json" 2>/dev/null)
 
 case "$concl" in
-  success) : ;;
+  success) [ -n "$pr_head" ] && log "병합 커밋에 CI 기록이 없어 PR(head ${pr_head:0:7}) 의 CI 로 판정함" ;;
   running) log "CI 진행 중 — 다음 주기에 재시도"; exit 0 ;;
-  none)    log "해당 커밋의 CI 실행 없음 — 배포하지 않음"; exit 0 ;;
+  none)    log "해당 커밋의 CI 실행도 PR 도 없음 — 배포하지 않음"; exit 0 ;;
   failure) alert critical "CI 실패한 커밋이 main 에 있음 (${remote:0:7}) — 배포 보류"; exit 0 ;;
   *)       log "CI 상태 확인 불가 — 배포하지 않음"; exit 0 ;;
 esac
