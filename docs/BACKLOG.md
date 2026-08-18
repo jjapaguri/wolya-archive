@@ -51,14 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **`robots.ts` / `sitemap.ts` 가 없다 — 검색 노출이 안 된다**
-  `src/app/robots.ts` 와 `src/app/sitemap.ts` 를 Next 16 App Router 방식으로 만든다.
-  sitemap 에는 `/` 와 `/m` 을 넣되, `/m` 은 `m/layout.tsx` 에서 canonical 이 `/` 로 잡혀 있으므로
-  중복 색인되지 않게 주의한다.
-  **이 항목은 화면에 보이지 않고 파일 2개뿐이라 개발 루프의 첫 검증용으로 맨 위에 두었다.**
-
-
-
 - [ ] `auto` **상품 카드에서 상세로 가는 경로를 만든다**
   `ProductCard.tsx` 에 링크도 `onClick` 도 없다. 상품을 눌러도 아무 일이 없다.
   `/product/[slug]` **와 `/m/product/[slug]` 를 함께** 만들고 양쪽 카드를 각각 감싼다.
@@ -111,6 +103,14 @@
 ## 완료
 
 ### 2026-08-18
+
+- [x] `auto` **`robots.ts` / `sitemap.ts` 추가 — PR 대기 중 (`auto/robots-sitemap`)**
+  `src/app/robots.ts` 와 `src/app/sitemap.ts` 를 Next 16 App Router 방식(함수형, `MetadataRoute`)으로 만들었다.
+  sitemap 에는 `/` 와 `/m` 을 모두 넣었다 — `/m` 은 `m/layout.tsx` 의 `alternates.canonical: "/"` 로
+  검색엔진이 같은 페이지로 합쳐 처리하므로 중복 색인 걱정 없이 그대로 둔다.
+  `npm run build` 후 `/robots.txt` `/sitemap.xml` 정적 라우트로 생성됨을 확인했고,
+  프로덕션 서버(`npm run start`)를 로컬에서 띄워 두 URL 을 curl 로 직접 확인했다.
+  화면에 보이는 변경이 없어 `/` `/m` 모바일 확인은 별도로 하지 않았다(라우트가 아니라 메타 파일이라 해당 없음).
 
 - [x] `mobile-layout` 브랜치를 main 에 병합 — **PR #1, 병합 커밋 `d0bdf1f`**
   충돌 0, 17개 파일 / +777 −5. 기존 데스크톱 파일 중 바뀐 것은 `GrainOverlay.tsx` 하나뿐이고
