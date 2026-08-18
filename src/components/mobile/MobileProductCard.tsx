@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Product } from "@/data/products";
 
 /**
@@ -7,7 +8,10 @@ import type { Product } from "@/data/products";
  */
 export default function MobileProductCard({ product }: { product: Product }) {
   return (
-    <article className="w-[280px] shrink-0 snap-center border border-fg/10 bg-fg/[0.02] p-5">
+    <Link
+      href={`/m/product/${product.slug}`}
+      className="block w-[280px] shrink-0 snap-center border border-fg/10 bg-fg/[0.02] p-5"
+    >
       <div className="relative mb-5 h-[320px] w-full overflow-hidden bg-accent-dim">
         <Image
           src={product.image}
@@ -50,6 +54,6 @@ export default function MobileProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="mt-4 text-[10px] tracking-[0.05em] text-accent">{product.categories}</div>
-    </article>
+    </Link>
   );
 }

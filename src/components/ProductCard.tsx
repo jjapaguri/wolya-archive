@@ -1,9 +1,13 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Product } from "@/data/products";
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
-    <div className="w-[280px] shrink-0 border border-border bg-fg/[0.02] p-6 transition-colors duration-300 hover:border-accent lg:w-[320px]">
+    <Link
+      href={`/product/${product.slug}`}
+      className="block w-[280px] shrink-0 border border-border bg-fg/[0.02] p-6 transition-colors duration-300 hover:border-accent lg:w-[320px]"
+    >
       <div className="relative mb-5 h-[320px] w-full bg-accent-dim lg:h-[380px]">
         <Image
           src={product.image}
@@ -62,6 +66,6 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="mt-3 font-sans text-[10px] tracking-[0.05em] text-accent">
         {product.categories}
       </div>
-    </div>
+    </Link>
   );
 }

@@ -1,5 +1,6 @@
 export type Product = {
   id: number;
+  slug: string;
   tag: string;
   image: string;
   name: string;
@@ -36,10 +37,15 @@ const images = [
 
 export const products: Product[] = images.map((image, index) => ({
   id: index + 1,
+  slug: `curation-${String(index + 1).padStart(3, "0")}`,
   tag: `CURATION 00${index + 1}`,
   image,
   ...baseFields,
 }));
+
+export function getProductBySlug(slug: string): Product | undefined {
+  return products.find((product) => product.slug === slug);
+}
 
 export const topRowProducts = [...products.slice(0, 4), ...products.slice(0, 4)];
 export const bottomRowProducts = [...products.slice(4, 8), ...products.slice(4, 8)];
