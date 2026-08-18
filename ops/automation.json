@@ -9,6 +9,8 @@
     "opscheck":  true,
     "research":  true,
     "agent":     true,
+    "develop":   true,
+    "scout":     true,
     "writes":    false
   },
 
@@ -19,6 +21,8 @@
     "opscheck": "일일 DB 점검 리포트 생성",
     "research": "Cowork 아이템 리서치 예약 작업",
     "agent":    "서버 위 헤드리스 Claude Code — critical 발생 시 자동 진단, ops/queue 작업 처리",
+    "develop":  "매일 03:00 KST 백로그 1건을 구현해 PR 을 여는 GitHub Actions 개발 루프",
+    "scout":    "매주 월 04:00 KST 측정 + 백로그 3건 미만일 때만 도는 결함 정찰",
     "writes":   "자동화가 운영 DB에 쓰기를 해도 되는지. 지금은 앱-DB 연결 자체가 없어 false. 연결 후 사용자가 true 로 바꾼다."
   },
 
