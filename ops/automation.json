@@ -1,0 +1,31 @@
+{
+  "_readme": "이 파일이 전체 자동화의 킬스위치다. GitHub 웹에서 연필 아이콘으로 고치고 커밋하면 폰에서도 1분 안에 전면 정지된다. 서버·GitHub Actions·Cowork 예약작업이 모두 매 실행 첫 단계에서 이 파일을 읽는다.",
+
+  "enabled": true,
+
+  "switches": {
+    "deploy":    true,
+    "healing":   true,
+    "opscheck":  true,
+    "research":  true,
+    "agent":     true,
+    "writes":    false
+  },
+
+  "_switch_readme": {
+    "enabled":  "false 로 두면 아래 스위치와 무관하게 모든 자동화가 즉시 no-op 종료한다. 긴급 정지용.",
+    "deploy":   "main push 시 자동 빌드·배포·롤백",
+    "healing":  "5분 헬스체크와 자가복구(PM2 재시작 등)",
+    "opscheck": "일일 DB 점검 리포트 생성",
+    "research": "Cowork 아이템 리서치 예약 작업",
+    "agent":    "서버 위 헤드리스 Claude Code — critical 발생 시 자동 진단, ops/queue 작업 처리",
+    "writes":   "자동화가 운영 DB에 쓰기를 해도 되는지. 지금은 앱-DB 연결 자체가 없어 false. 연결 후 사용자가 true 로 바꾼다."
+  },
+
+  "guards": {
+    "deploy_window_kst": "00:00-23:59",
+    "max_deploys_per_day": 10,
+    "rollback_on_healthcheck_fail": true,
+    "notify_email": "chun.percy@gmail.com"
+  }
+}
