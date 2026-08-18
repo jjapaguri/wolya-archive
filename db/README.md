@@ -33,7 +33,7 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 |---|---|---|
 | 1 | 상품 정보·재고 — brands, categories, products, product_variants, product_images, tags, product_tags | `001_products` |
 | 2 | 회원 정보 — users, user_social_accounts, user_addresses | `002_users` |
-| 3 | 주문 내역 — carts, cart_items, orders, order_items | 미작성 |
+| 3 | 주문 내역 — carts, cart_items, orders, order_items | `003_orders` |
 | 4 | 결제·배송 — payments, shipments, order_status_histories | 미작성 |
 | 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs | 미작성 |
 
@@ -72,6 +72,24 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 - 같은 소셜 계정이 두 회원에게 붙을 수 없다 (`UNIQUE(provider, provider_user_id)`) — 계정 탈취 경로 차단.
 - 기본 배송지는 회원당 1개 (부분 유니크 인덱스).
 - **수집하지 않는 것**: 생년월일, 성별, 주민번호. 안 쓰는 개인정보는 컬럼 자체를 만들지 않는다.
+
+## 스키마 3단계 요점 (주문) — **비회원 주문 허용**
+
+- **비회원 장바구니는 `carts.session_key`**, 회원 장바구니는 `carts.user_id`.
+  둘 중 하나만 채워져야 한다(CHECK). 로그인 시 세션 장바구니 항목을 회원 장바구니로 옮기고
+  세션 장바구니는 삭제한다 — 이 병합 로직은 앱 책임.
+- **비회원 주문은 `orders.user_id IS NULL`.** 조회는 주문번호 + 휴대폰번호.
+- **`order_no` 는 무작위 성분 필수** — `^[0-9]{8}-[A-Z0-9]{6,}$` 형식을 CHECK 로 강제한다.
+  순번(`1001`, `1002`…)을 쓰면 주문번호+휴대폰 조합을 유추당해 남의 주문을 열람할 수 있다.
+- **장바구니에는 가격을 저장하지 않는다.** 담아둔 사이 가격이 바뀔 수 있고, 진짜 가격은 결제 시점 상품 가격이다.
+- **주문서는 전부 스냅샷.** 주문자·배송지·상품명·단가를 값으로 복사한다.
+  `user_addresses` 나 `products` 를 참조해서 보여주면 나중에 과거 주문서가 바뀌어버린다.
+- **금액은 DB가 검산한다** (2중):
+  - `total_amount = items_amount + shipping_fee - discount_amount` (CHECK)
+  - `orders.items_amount = SUM(order_items.line_amount)` (커밋 시점 DEFERRED 제약 트리거)
+    → 항목을 빠뜨리거나 나중에 몰래 지워도 커밋이 거부된다. 실제 COMMIT 로 동작 확인함.
+  - `line_amount = unit_price × quantity` (CHECK)
+- 회원이 탈퇴해도 주문 기록은 남는다 (`user_id` 만 NULL 로).
 
 ## 백업
 
