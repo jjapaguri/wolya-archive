@@ -54,8 +54,14 @@ log "배포 시작 ${current:0:7} → ${remote:0:7}"
 echo "$current" > "$STATE_DIR/last_good_sha"
 
 deploy_to() {
+  # --omit=dev 를 쓰지 않는다. typescript·tailwindcss·@tailwindcss/postcss 가
+  # devDependencies 인데 next build 에 반드시 필요하다. 빼면 빌드가 죽는다.
+  #
+  # .next 를 먼저 지운다. 실패한 빌드가 남긴 캐시가 다음 빌드까지 오염시켜서
+  # 롤백마저 같은 이유로 실패하는 일이 실제로 있었다 (2026-08-18).
   git reset --hard "$1" --quiet \
-    && npm ci --omit=dev --no-audit --no-fund >/dev/null 2>&1 \
+    && rm -rf .next \
+    && npm ci --no-audit --no-fund >/dev/null 2>&1 \
     && NODE_OPTIONS="--max-old-space-size=1536" npm run build >/dev/null 2>&1 \
     && pm2 restart archive-wolya >/dev/null 2>&1
 }
