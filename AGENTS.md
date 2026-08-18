@@ -33,8 +33,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 레포 파일 수정 | ○ | 데스크톱 앱 폴더 연결 시 문서만 |
 | 인스타·리서치·문서·예약 작업·브라우저 | △ | ○ |
 
-- Cowork에 코드 작업이 들어오면 **조사·설계·변경안까지만** 만들고 실행은 Claude Code로 넘긴다.
-  GitHub 웹 업로드로 커밋하는 우회는 쓰지 않는다 — lint·build를 통과하지 않은 커밋이 된다.
+- Cowork에 코드 작업이 들어오면: 급하지 않으면 `docs/BACKLOG.md` 에 항목으로 넣는다(새벽
+  개발 루프가 처리). 급하면 조사·설계·변경안까지 만들어 Claude Code로 넘긴다.
+- GitHub 웹 커밋(브라우저)은 **문서·ops 설정에 한해 허용** — main의 CI가 검증하고
+  `auto_deploy` 는 초록불만 배포하므로 깨진 커밋이 서비스에 닿지 않는다.
+  앱 코드는 로컬에서 lint·build 를 돌릴 수 있는 Claude Code 가 기본이다.
 - Cowork에서는 `.claude/agents/` 파일을 **작업 진행 규칙**으로 직접 읽고 따른다.
 
 ---
@@ -73,6 +76,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 여러 역할에 걸치는 요청은 `chief-of-staff` 부터 시작한다.
 
+이 4역할 외에 코드를 바꾸는 **자동 행위자**가 둘 있다 — 개발 루프(매일 03:00,
+`docs/BACKLOG.md` 맨 위 1건 → PR → 조건 충족 시 자동 병합, 정본 `docs/DEV-LOOP.md`)와
+서버 헤드리스 에이전트(읽기 전용 진단, 정본 `ops/README.md`).
+**이 둘에게도 본 문서의 불변 규칙과 4절이 그대로 적용된다.**
+
 ---
 
 ## 4. 승인 없이 실행 금지 (전 역할 공통)
@@ -101,6 +109,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 역할 사용법·조직도 | `.claude/agents/README.md` |
 | 배포 절차·트러블슈팅 | `.claude/agents/builder.md` 배포 섹션 |
 | 24시간 자동화 구성·킬스위치 | `ops/README.md` |
+| 개발 백로그(작업 큐)·이중 라우트 규칙 | `docs/BACKLOG.md` |
+| 개발 자동화 루프 | `docs/DEV-LOOP.md` |
+| 사건·부검 기록 | `docs/INCIDENTS.md` |
 
 - **역할 파일과 문서에 현재 상황을 하드코딩하지 않는다.** `docs/STATUS.md` 를 가리킨다.
 - 프로젝트 지식(Cowork) 문서는 **서술형 사본**이다. 레포와 어긋나면 **레포가 정답**이다.

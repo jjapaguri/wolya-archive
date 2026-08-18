@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.next/**)",
+      "Read(./.git/**)",
+      "Read(./package-lock.json)",
+      "Read(./.env*)",
+      "Read(./**/*.pem)"
+    ]
+  }
+}

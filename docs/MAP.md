@@ -1,80 +1,68 @@
 # 레포 지도
 
 작업 시작 전에 이 파일부터 읽는다. **여기 없는 디렉터리는 뒤지지 않는다.**
+파일 개수·목록은 세지 않는다 — 개발 루프가 매일 파일을 추가하므로 목록의 정본은 git 이다.
+여기는 **구조와 규칙**만 적는다.
 
 ## 최상위
 
 | 경로 | 내용 |
 |---|---|
 | `AGENTS.md` | 불변 규칙·승인 항목·환경 분담 (정본). `CLAUDE.md` 는 이 파일을 가리키는 한 줄 |
-| `docs/MAP.md` | 이 파일 — 레포 지도 |
-| `docs/STATUS.md` | **현재 진행 상황·미해결 과제 (정본).** 계획 세우기 전에 읽는다 |
-| `db/` | 스키마 정본 |
-| `src/` | Next.js 앱 |
-| `scripts/pg_backup.sh` | 서버 cron 백업 스크립트 (04:00 KST) |
-| `.claude/agents/` | 역할 에이전트 4종 |
+| `docs/STATUS.md` | **현재 전제·결정 대기 (정본).** 계획 전에 읽는다 |
+| `docs/BACKLOG.md` | **개발 자동화 작업 큐.** 이중 라우트 규칙·자동 병합 금지 경로도 이 파일 상단 |
+| `docs/DEV-LOOP.md` | 개발 자동화 루프 설명 (매일 03:00 + 주간 정찰) |
+| `docs/INCIDENTS.md` | 사건·부검 기록. 이상 증상이 낯익으면 먼저 검색 |
+| `db/` | 스키마 정본 (`db/README.md`) + 앱-DB 연결 인수인계 |
+| `ops/` | 24시간 서버 자동화 (`ops/README.md` 정본, `automation.json` = 킬스위치) |
+| `.github/workflows/` | `ci.yml`(lint+build) · `heartbeat.yml`(cron 감시) · 개발 루프 |
+| `scripts/pg_backup.sh` | 서버 백업 cron (04:00 KST) |
+| `.claude/agents/` | 역할 에이전트 4종 (Claude Code 전용) |
 
 ## 읽지 않는다 (탐색 대상 아님)
 
-`node_modules/` · `.next/` · `.git/` · `public/` 이미지 · `package-lock.json` (242KB)
+`node_modules/` · `.next/` · `.git/` · `public/` 이미지 · `package-lock.json`
 
 예외 — Next 16은 학습 데이터와 다르므로 API가 헷갈리면 `node_modules/next/dist/docs/` 의
-해당 가이드 **한 편만** 읽는다. 디렉터리 전체를 훑지 않는다.
+해당 가이드 **한 편만** 읽는다.
 
-## `src/` (main 브랜치)
-
-```
-src/app/layout.tsx        루트 레이아웃·메타데이터
-src/app/page.tsx          데스크톱 홈 (섹션 컴포넌트를 조립만 함)
-src/app/globals.css       Tailwind 4 · 전역 토큰
-src/components/           데스크톱 섹션 컴포넌트 12종
-src/data/products.ts      상품 데이터 ★ 45줄 플레이스홀더
-```
-
-★ **DB 연결층이 생기면 `src/data/products.ts` 한 곳만 실제 조회로 바꾼다.**
-export 이름을 유지하면 데스크톱·모바일 화면 컴포넌트는 손대지 않아도 된다.
-
-`src/components/` 는 전부 `page.tsx` 가 조립하는 프레젠테이션 컴포넌트다.
-화면 문구·레이아웃 수정은 해당 `*Section.tsx` 하나만 열면 된다.
-`GrainOverlay.tsx` 만 데스크톱·모바일 공용(`alpha` / `frameIntervalMs` / `opacity` 옵션).
-
-## `mobile-layout` 브랜치에만 있는 것
-
-main에는 없다. 모바일 작업이면 브랜치를 먼저 확인한다.
+## `src/` — 데스크톱 `/` 와 모바일 `/m` 은 별도 라우트다 (main 병합 완료)
 
 ```
-src/app/m/layout.tsx      모바일 메타데이터·viewport
-src/app/m/page.tsx        모바일 페이지
-src/components/mobile/    모바일 컴포넌트 11종
-src/proxy.ts              기기 판별 후 /m 리다이렉트 (middleware.ts 아님 — Next 16에서 deprecated)
+src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts 아님 (Next 16에서 deprecated)
+src/app/                  데스크톱 라우트
+src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝
+src/components/           데스크톱 컴포넌트
+src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
+src/data/                 ★ 유일한 공유 지점. products.ts 와 Product 타입
 ```
 
-**모바일 코드를 만지기 전에 `.claude/agents/builder.md` 의 "모바일 전용 레이아웃" 함정 목록을 읽는다.**
-(`<Link>` 프리페치 쿠키 사고, `proxy.ts` matcher 제외 경로, grain 캔버스 프레임 간격, 태블릿 취급)
+- **새 라우트는 반드시 `/x` 와 `/m/x` 짝으로.** 한쪽만 만들면 휴대폰에서 404.
+  상세 규칙과 예외 처리는 `docs/BACKLOG.md` "이중 라우트 규칙" 이 정본
+- 화면을 바꾸면 양쪽을 고친다. **데이터(`src/data/`)만 바꾸면 한 번으로 양쪽 반영**
+- DB 연결층이 생기면 `src/data/products.ts` 한 곳만 실제 조회로 바꾼다.
+  export 이름 유지 시 화면 컴포넌트 수정 불필요
+- 공용 컴포넌트는 `GrainOverlay.tsx` 하나뿐. 모바일 함정 목록은
+  `.claude/agents/builder.md` "모바일 전용 레이아웃" 절
 
 ## `db/`
 
 | 경로 | 내용 |
 |---|---|
 | `db/README.md` | **스키마·마이그레이션 절차·단계표 정본** |
-| `db/HANDOFF-앱-DB-연결.md` | 다음 작업 인수인계 |
-| `db/migrations/00N_*.{up,down,verify}.sql` | 단계별 3종 세트. 1 상품 / 2 회원 / 3 주문 / 4 결제배송 / 5 CS |
+| `db/HANDOFF-앱-DB-연결.md` | 앱-DB 연결 작업 인수인계 |
+| `db/migrations/00N_*.{up,down,verify}.sql` | 단계별 3종 세트 |
 
-**컬럼명을 추측하지 않는다.** 실제 정의는 해당 `*.up.sql` 을 열어 확인한다.
+**컬럼명을 추측하지 않는다.** 실제 정의는 해당 `*.up.sql` 을 연다.
 
 ## 자주 쓰는 명령
 
 ```bash
-npm run dev            # 로컬 미리보기 (CMD 또는 Git Bash — PowerShell은 ExecutionPolicy로 막힘)
-npm run lint && npm run build   # 완료 기준
+npm run dev                       # 로컬 미리보기 (CMD/Git Bash — PowerShell 불가)
+npm run lint && npm run build     # 완료 기준. 출력이 길면 2>&1 | tail -20
+ssh wolya                         # 서버 (~/.ssh/config 별칭)
+ssh wolya 'tail -20 ~/ops/logs/$(date +%F).log'   # 자동화 로그
 ```
 
-출력이 길면 잘라서 본다 — `npm run build 2>&1 | tail -20`
-
-서버:
-
-```bash
-ssh -i C:\Users\chunp\.ssh\LightsailDefaultKey-ap-northeast-2.pem ubuntu@54.117.20.132
-cd ~/app && set -a && . ./.env.local && set +a && psql "$DATABASE_URL"   # DATABASE_URL 값은 출력하지 않는다
-~/deploy.sh            # 재배포 — 승인 필요
-```
+DB 조회(서버 안): `cd ~/app && set -a && . ./.env.local && set +a && psql "$DATABASE_URL"`
+— `DATABASE_URL` 값은 출력하지 않는다.
