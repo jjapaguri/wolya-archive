@@ -34,7 +34,7 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 1 | 상품 정보·재고 — brands, categories, products, product_variants, product_images, tags, product_tags | `001_products` |
 | 2 | 회원 정보 — users, user_social_accounts, user_addresses | `002_users` |
 | 3 | 주문 내역 — carts, cart_items, orders, order_items | `003_orders` |
-| 4 | 결제·배송 — payments, shipments, order_status_histories | 미작성 |
+| 4 | 결제·배송 — payments, shipments, order_status_histories | `004_payments` |
 | 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs | 미작성 |
 
 ## 스키마 1단계 요점
@@ -90,6 +90,26 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
     → 항목을 빠뜨리거나 나중에 몰래 지워도 커밋이 거부된다. 실제 COMMIT 로 동작 확인함.
   - `line_amount = unit_price × quantity` (CHECK)
 - 회원이 탈퇴해도 주문 기록은 남는다 (`user_id` 만 NULL 로).
+
+## 스키마 4단계 요점 (결제·배송)
+
+- **`payments.pg_transaction_id` UNIQUE 가 웹훅 멱등성의 핵심.**
+  PG 웹훅은 같은 건이 2번 이상 온다. UNIQUE 충돌은 에러가 아니라 "이미 처리됨"으로
+  **200 응답**할 것. 500 을 주면 PG가 계속 재시도한다.
+- **결제 금액은 주문 총액과 대조된다** (커밋 시점 트리거).
+  5만원 주문에 100원 결제 승인이 기록되는 것을 DB가 거부한다.
+- **주문당 결제 완료 기록은 1건** (부분 유니크 인덱스) — 이중 청구 기록 방지.
+- **`payments.raw_response` 에 카드번호·CVC 를 넣지 말 것.** PG 응답을 그대로 저장하면
+  민감정보가 DB에 남는다. 저장 전 필터링은 앱 책임.
+- **송장번호 중복 입력 차단** (`UNIQUE(carrier, tracking_no)`) — 운영에서 가장 흔한 사고.
+  A 주문 송장을 B 주문에 잘못 넣으면 두 고객 모두 배송 조회가 틀어진다.
+- **주문 상태 이력은 트리거가 자동 기록한다.** 앱에서 INSERT 하지 않아도 되고, 빠뜨릴 수도 없다.
+  누가 바꿨는지 남기려면 트랜잭션 안에서 먼저:
+  ```sql
+  SET LOCAL wolya.actor = 'admin';   -- system | admin | customer | pg_webhook
+  ```
+  미지정 시 `system` 으로 기록된다.
+- 결제 기록은 `ON DELETE RESTRICT` — 주문을 지우려 해도 결제 기록이 있으면 막힌다(정산 증빙 보호).
 
 ## 백업
 
