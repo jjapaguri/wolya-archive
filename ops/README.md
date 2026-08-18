@@ -19,6 +19,7 @@ JSON이 깨졌거나, CI 상태가 불명확하면 전부 "실행하지 않음" 
 |---|---|---|
 | `automation.json` | — | 킬스위치. 모든 스크립트가 매 실행 첫 단계에서 읽는다 |
 | `lib.sh` | — | 공용: 킬스위치·로그·잠금·알림 |
+| `run.sh` | — | cron 진입점. crontab 은 이 파일만 부른다. 대상을 `bash` 로 실행하고, 종료코드가 0이 아니면 일일 로그에 남긴다 |
 | `health_check.sh` | 5분 | 사이트 200 + PM2 확인. 2회 연속 실패 시 PM2 재시작, 4회면 nginx reload |
 | `auto_deploy.sh` | 10분 | main 새 커밋 + CI 초록불이면 배포. 배포 후 검증 실패 시 직전 커밋으로 자동 롤백 |
 | `agent_runner.sh` | 20분 | 헤드리스 Claude Code. critical 발생 시 자동 진단, `~/ops/queue/*.task` 처리 |

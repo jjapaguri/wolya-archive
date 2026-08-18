@@ -12,7 +12,7 @@ mkdir -p "$OPS_DIR"/{logs,state,reports}
 chmod 700 "$OPS_DIR"
 
 echo "==> 2/6 스크립트 심볼릭 링크 (레포를 pull 하면 자동으로 최신이 된다)"
-for f in lib.sh health_check.sh daily_check.sh auto_deploy.sh publish.sh agent_runner.sh; do
+for f in lib.sh run.sh health_check.sh daily_check.sh auto_deploy.sh publish.sh agent_runner.sh; do
   ln -sf "$SRC/$f" "$OPS_DIR/$f"
 done
 chmod +x "$SRC"/*.sh
@@ -62,11 +62,12 @@ echo "==> 5/6 cron"
 # 기존 백업(04:00)과 겹치지 않게 배치했다.
 CRON_BLOCK=$(cat <<CRON
 # --- wolya automation (setup.sh 가 관리. 직접 편집하지 말 것) ---
-*/5  * * * * $OPS_DIR/health_check.sh  >/dev/null 2>&1
-*/10 * * * * $OPS_DIR/auto_deploy.sh   >/dev/null 2>&1
-30   3 * * * $OPS_DIR/daily_check.sh   >/dev/null 2>&1
-*/20 * * * * $OPS_DIR/agent_runner.sh  >/dev/null 2>&1
-*/15 * * * * $OPS_DIR/publish.sh       >/dev/null 2>&1
+# run.sh 를 거치는 이유는 ops/run.sh 주석 참고 (실행 비트 사고·조용한 실패 방지).
+*/5  * * * * /bin/bash $OPS_DIR/run.sh health_check >/dev/null 2>&1
+*/10 * * * * /bin/bash $OPS_DIR/run.sh auto_deploy  >/dev/null 2>&1
+30   3 * * * /bin/bash $OPS_DIR/run.sh daily_check  >/dev/null 2>&1
+*/20 * * * * /bin/bash $OPS_DIR/run.sh agent_runner >/dev/null 2>&1
+*/15 * * * * /bin/bash $OPS_DIR/run.sh publish      >/dev/null 2>&1
 0    5 * * 0 find $OPS_DIR/logs -name '*.log' -mtime +14 -delete
 # --- end wolya automation ---
 CRON
