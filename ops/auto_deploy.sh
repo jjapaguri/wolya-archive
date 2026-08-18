@@ -6,8 +6,23 @@
 #   - GitHub 에 서버 SSH 키를 저장하지 않아도 된다
 #   - 킬스위치 한 곳(ops/automation.json)으로 확실히 멈출 수 있다
 #   - Actions 가 죽어도 서버는 그냥 배포를 안 할 뿐, 이상 동작을 하지 않는다
+# ── 자기 자신을 덮어쓰는 문제 방지 ──────────────────────────
+# 이 스크립트는 아래에서 `git reset --hard` 로 ~/app 을 갱신하는데,
+# 그 대상에 이 파일 자신이 포함된다(~/ops/auto_deploy.sh 는 ~/app/ops/auto_deploy.sh 심볼릭 링크).
+# bash 는 스크립트를 통째로 읽지 않고 바이트 오프셋으로 이어 읽는다. 실행 중에 파일이 바뀌면
+# 남은 부분을 새 파일의 엉뚱한 위치에서 읽는다 — 조용히 중단되거나(종료코드 0!)
+# 원본에 없던 명령 조각이 실행된다. 실제로 재현된다.
+# 사본을 만들어 그쪽에서 실행하면 원본이 어떻게 바뀌든 영향받지 않는다.
+if [ -z "${OPS_SELF_COPY:-}" ]; then
+  _src="$(readlink -f "$0")"
+  _run="${OPS_DIR:-$HOME/ops}/state/auto_deploy.running"
+  mkdir -p "$(dirname "$_run")"
+  cp "$_src" "$_run" || exit 1
+  OPS_SELF_COPY=1 OPS_SRC_DIR="$(dirname "$_src")" exec bash "$_run"
+fi
+
 SCRIPT_NAME=auto_deploy
-. "$(dirname "$0")/lib.sh"
+. "${OPS_SRC_DIR:-$(dirname "$0")}/lib.sh"
 guard deploy
 lock
 
