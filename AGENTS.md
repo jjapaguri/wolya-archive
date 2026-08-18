@@ -14,7 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ### 역할 에이전트
 
-`.claude/agents/` 에 6개 역할이 정의돼 있다. 사용법과 조직도는 `.claude/agents/README.md` 참고.
+`.claude/agents/` 에 4개 역할이 정의돼 있다 (chief-of-staff / builder / ops-manager / item-scout). 사용법과 조직도는 `.claude/agents/README.md` 참고.
 범위가 여러 역할에 걸치면 `chief-of-staff`부터 시작한다.
 
 ### 공통 불변 규칙 (모든 역할)
