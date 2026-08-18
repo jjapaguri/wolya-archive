@@ -35,7 +35,7 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 2 | 회원 정보 — users, user_social_accounts, user_addresses | `002_users` |
 | 3 | 주문 내역 — carts, cart_items, orders, order_items | `003_orders` |
 | 4 | 결제·배송 — payments, shipments, order_status_histories | `004_payments` |
-| 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs | 미작성 |
+| 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs, **order_returns, order_return_items** | `005_cs` |
 
 ## 스키마 1단계 요점
 
@@ -110,6 +110,31 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
   ```
   미지정 시 `system` 으로 기록된다.
 - 결제 기록은 `ON DELETE RESTRICT` — 주문을 지우려 해도 결제 기록이 있으면 막힌다(정산 증빙 보호).
+
+## 스키마 5단계 요점 (리뷰·FAQ·반품) — **반품은 별도 테이블**
+
+- **`reviews.order_item_id` 는 NOT NULL + UNIQUE.** 이 한 줄이 두 가지를 동시에 강제한다:
+  산 사람만 쓸 수 있고(구매 인증), 같은 항목에 두 번 못 쓴다.
+  **이 컬럼을 nullable 로 바꾸면 리뷰 조작이 열린다.**
+- 결제되지 않은 주문에는 리뷰를 못 쓴다 (트리거). `pending`/`cancelled` 주문은 거부.
+- **문의는 답변 방법이 없으면 등록 불가** — 회원이거나, 비회원이면 이름+연락처 필수.
+- **답변을 달면 문의 상태가 자동으로 `answered`** 로 바뀐다 (트리거).
+  "미답변 문의 수" 집계가 앱 실수로 틀어지지 않는다.
+- **반품/교환은 `order_returns` 별도 테이블** (2026-08-18 사용자 확정).
+  주문 상태만 바꾸면 사유·부담주체·수거송장·부분반품을 남길 수 없다.
+  - `order_returns_defect_shop_pays` — **하자·오배송이면 배송비 판매자 부담 강제**.
+    고객에게 전가하는 값은 저장 자체가 안 된다 (전자상거래법).
+  - `return_no` 도 주문번호와 같은 무작위 형식 규칙.
+  - 수거 이후 단계(`picked_up`/`completed`)면 수거 송장번호 필수.
+  - 거절이면 사유와 시각 필수.
+- **부분 반품은 `order_return_items`.** 주문 수량보다 많이 반품하거나,
+  다른 주문의 항목을 붙이는 것을 트리거가 막는다.
+
+### DB가 막지 않는 것 (앱 책임)
+
+- 반품 신청 기한 (수령 후 3일 등) — 시간 규칙은 정책 변경이 잦아 DB에 넣지 않았다
+- 단순 변심 시 왕복 배송비 **금액** 계산
+- 반품 완료 시 재고 복원 (`stock_quantity` 증가)과 `orders.status` 갱신
 
 ## 백업
 
