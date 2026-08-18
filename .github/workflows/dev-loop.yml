@@ -1,0 +1,188 @@
+name: Dev Loop
+
+# 매일 1회. docs/BACKLOG.md 맨 위 항목 하나를 집어 구현하고 PR 을 연다.
+# 사람은 멈추기만 하면 된다 — ops/automation.json 의 develop 를 false 로 커밋하면 즉시 정지.
+#
+# 왜 서버가 아니라 Actions 인가:
+#   Lightsail 은 2GB 에 Postgres·Next·PM2 가 함께 산다. 거기서 빌드까지 돌리면 메모리가 터진다
+#   (실제로 첫 자동배포가 빌드 단계에서 죽었다). Actions 러너는 공개 레포라 사실상 무료다.
+
+on:
+  schedule:
+    - cron: "0 18 * * *"      # 매일 03:00 KST — 사람이 안 보는 시간에 돌려 충돌을 줄인다
+  workflow_dispatch:
+    inputs:
+      task_hint:
+        description: "특정 항목을 지정하려면 백로그 항목의 첫 문장을 붙여넣기 (비우면 맨 위 항목)"
+        required: false
+
+concurrency:
+  group: dev-loop            # 동시 실행 금지. 두 개가 같은 항목을 잡으면 토큰만 낭비된다
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+jobs:
+  killswitch:
+    name: 킬스위치 확인
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+      - id: check
+        run: |
+          go=$(python3 -c '
+          import json
+          try:
+              d = json.load(open("ops/automation.json"))
+          except Exception:
+              print("no"); raise SystemExit
+          print("yes" if d.get("enabled") and d.get("switches", {}).get("develop") else "no")
+          ')
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          [ "$go" = "yes" ] || echo "::notice::자동 개발이 꺼져 있어 이번 실행은 건너뜁니다."
+
+  develop:
+    name: 백로그 1건 구현
+    needs: killswitch
+    if: needs.killswitch.outputs.go == 'yes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30        # 폭주 방지 — 이 시간을 넘기면 강제 종료된다
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.2'
+          cache: npm
+
+      - run: npm ci
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --max-turns 40
+          prompt: |
+            너는 archive-wolya.com (빈티지·아카이브 의류 셀렉트샵) 레포에서 혼자 일하는 개발자다.
+            사람은 지금 자고 있다. 질문하지 말고 판단해서 끝까지 해라.
+
+            ## 먼저 읽을 것
+            AGENTS.md (불변 규칙·금지 항목 — 정본), docs/STATUS.md (현재 상황), docs/BACKLOG.md (작업 큐).
+
+            ## 이번 실행에서 할 일 — 정확히 한 항목만
+
+            `docs/BACKLOG.md` 의 "## 할 일" 에서 **맨 위 미완료 항목 하나**를 집는다.
+            ${{ github.event.inputs.task_hint && format('다만 사람이 이번 실행에 지정한 항목이 있다: "{0}". 이것을 우선한다.', github.event.inputs.task_hint) || '' }}
+
+            등급이 `review` 인 항목은 **구현하되 자동 병합하지 않는다**(아래 6번 참고).
+
+            여러 항목을 한 번에 하지 마라. 하나를 제대로 끝내는 것이 이 루프의 전부다.
+
+            ## 절차
+
+            1. 항목을 하나 고르고, 무엇을 만들 것인지 한 문단으로 정한다.
+            2. 새 브랜치를 판다: `auto/<짧은-영문-슬러그>`
+            3. 구현한다. 아래 "지켜야 할 것" 을 반드시 따른다.
+            4. **`npm run lint && npm run build` 를 실제로 돌려 통과시킨다.**
+               통과하지 못하면 고칠 때까지 반복한다. 통과하지 못한 채로 PR 을 열지 마라.
+            5. `docs/BACKLOG.md` 를 갱신한다 — 끝낸 항목을 "## 완료" 로 옮기고 날짜를 적는다.
+               **항목을 지우지 마라.** 지우면 정찰이 같은 것을 다시 찾아낸다.
+            6. PR 을 연다. 제목은 한국어로 무엇을 했는지 한 줄.
+               본문에는 반드시 다음을 적는다:
+               - 무엇을 왜 했는지 (2~3줄)
+               - 직접 확인한 것과 확인하지 못한 것
+               - 등급이 `auto` 이고 아래 금지 경로를 건드리지 않았다면 본문 마지막 줄에 `AUTOMERGE-OK`
+               - 그 외에는 마지막 줄에 `NEEDS-REVIEW` 와 그 이유
+
+            ## 데스크톱과 모바일은 별도 라우트다 — 이게 이 레포에서 가장 자주 나는 사고다
+
+            `/` 와 `/m` 은 **의도적으로 분리된 두 라우트**다. `src/proxy.ts` 가 기기를 보고 보낸다.
+
+            - **공유**: `src/data/` (products.ts, Product 타입). 여기만 고치면 양쪽에 반영된다
+            - **독립**: `src/components/` 와 `src/app/`. 모바일 컴포넌트는 데스크톱 것을 하나도 import 하지 않는다
+
+            **화면에 보이는 것을 바꾸면 `/` 와 `/m` 을 둘 다 고쳐야 한다.**
+
+            새 라우트는 특히 위험하다. 프록시가 `/shop` → `/m/shop` 으로 보내므로
+            **데스크톱만 만들면 휴대폰 사용자는 404 를 본다.** 레이아웃이 어색한 정도가 아니라 페이지가 없다.
+            `/shop` 을 만들면 `/m/shop` 도 만든다. `/product/[slug]` 를 만들면 `/m/product/[slug]` 도 만든다.
+
+            양쪽을 다 못 하겠으면 **한쪽만 만들지 말고** PR 본문에 `NEEDS-REVIEW` 와 이유를 적어라.
+            반쪽짜리 라우트는 지금 상태보다 나쁘다.
+
+            PR 본문에 **`/` 와 `/m` 을 각각 어떻게 확인했는지** 반드시 적어라.
+
+            ## 지켜야 할 것
+
+            - **금지 경로** — 이 중 하나라도 건드렸다면 등급과 무관하게 `NEEDS-REVIEW` 다:
+              `db/migrations/`, `ops/`, `.github/workflows/`, `AGENTS.md`, `next.config.ts`,
+              결제·주문 관련 코드, `package.json` 의 의존성 추가
+            - **새 라이브러리를 설치하지 마라.** 지금 스택(Next 16 App Router / React 19 / TS / Tailwind 4)만으로 해라.
+              꼭 필요하면 만들지 말고 백로그에 `review` 항목으로 적어두고 다른 방법을 쓴다.
+            - **AGENTS.md 4절 금지 항목을 어기지 마라** — DB 파괴적 변경, 결제·환불 실행,
+              고객 발송, 가격·프로모션 결정, 새 UI 라이브러리 도입.
+            - 이 레포의 Next.js 는 **버전 16이고 네 학습 데이터와 다르다.**
+              확신이 없으면 `node_modules/next/dist/docs/` 를 읽어라. 추측으로 API 를 쓰지 마라.
+            - 금액은 정수 원 단위. 재고는 `product_variants.stock_quantity` 가 실체다.
+            - 상품 데이터는 아직 `src/data/products.ts` 하드코딩이다. DB 를 붙이려 하지 마라(별도 항목이다).
+            - 한국어 UI 문구를 쓴다. 톤은 기존 컴포넌트를 따른다.
+
+            ## 막히면
+
+            30분 안에 못 끝낼 것 같으면 **범위를 줄여서라도 동작하는 것을 낸다.**
+            그래도 안 되면 PR 을 열지 말고, `docs/BACKLOG.md` 의 해당 항목 아래에
+            무엇이 막혔는지 2줄로 적는 커밋만 main 에 남기고 끝낸다. 다음 실행이 이어받는다.
+
+  automerge:
+    name: 조건 충족 시 자동 병합
+    needs: develop
+    if: always() && needs.develop.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+
+      - name: 병합 후보 조회
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr list --state open --limit 20 \
+            --json number,body,headRefName,files > /tmp/prs.json
+
+      - name: 자동 병합 판정
+        id: judge
+        run: |
+          out=$(python3 .github/scripts/automerge_check.py /tmp/prs.json)
+          num=${out%% *}
+          reason=${out#* }
+          echo "num=$num"       >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+          echo "판정: $out"
+
+      - name: 병합 보류 사유 남기기
+        if: steps.judge.outputs.num == '0'
+        run: echo "::notice::자동 병합 안 함 — ${{ steps.judge.outputs.reason }}"
+
+      - name: CI 확인 후 병합
+        if: steps.judge.outputs.num != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ steps.judge.outputs.num }}
+        run: |
+          set -uo pipefail
+          sleep 30          # CI 체크가 PR 에 붙을 시간을 준다
+          if ! gh pr checks "$NUM" --watch --interval 20; then
+            gh pr comment "$NUM" --body "CI 가 통과하지 못해 자동 병합하지 않았습니다. 사람이 확인해 주세요."
+            exit 0
+          fi
+          gh pr merge "$NUM" --squash --delete-branch
+          echo "::notice::PR #$NUM 자동 병합 완료. 서버 cron 이 살아 있으면 10분 내 배포됩니다."

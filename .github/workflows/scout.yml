@@ -1,0 +1,169 @@
+name: Scout
+
+# 두 가지를 한다.
+#   1) 측정 — 응답시간·빌드 크기를 스크립트로 재고 기준선과 비교한다. LLM 을 쓰지 않는다(공짜).
+#   2) 정찰 — 백로그가 바닥났을 때만 LLM 을 불러 새 항목을 찾는다.
+#
+# 왜 매일 LLM 정찰을 돌리지 않는가:
+#   백로그가 남아 있는데 또 훑으면 이미 아는 것을 다시 발견하며 토큰만 태운다.
+#   "할 일이 3개 미만일 때만" 이 조건 하나가 이 워크플로 비용의 대부분을 결정한다.
+
+on:
+  schedule:
+    - cron: "0 19 * * 1"      # 매주 월요일 04:00 KST
+  workflow_dispatch:
+
+concurrency:
+  group: scout
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  measure:
+    name: 측정 (LLM 없음)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: '22.23.2', cache: npm }
+      - run: npm ci
+
+      - name: 빌드 크기와 응답시간 측정
+        run: |
+          set -uo pipefail
+          NODE_OPTIONS="--max-old-space-size=3072" npm run build > /tmp/build.log 2>&1 || true
+          size_kb=$(du -sk .next 2>/dev/null | cut -f1)
+
+          # 운영 사이트 응답시간 3회 중앙값
+          times=""
+          for i in 1 2 3; do
+            t=$(curl -s -o /dev/null -w '%{time_total}' --max-time 30 https://archive-wolya.com || echo 99)
+            times="$times $t"
+          done
+          median=$(echo $times | tr ' ' '\n' | sort -n | sed -n 2p)
+
+          python3 - "$size_kb" "$median" <<'PY'
+          import json, os, sys
+          size, ttfb = int(sys.argv[1] or 0), float(sys.argv[2] or 0)
+          path = "docs/metrics.json"
+          hist = json.load(open(path)) if os.path.exists(path) else {"runs": []}
+          prev = hist["runs"][-1] if hist["runs"] else None
+
+          warn = []
+          if prev:
+              if size > prev["build_kb"] * 1.25:
+                  warn.append(f"빌드 산출물이 {prev['build_kb']}KB → {size}KB 로 25% 이상 커졌다")
+              if ttfb > 2.0 and ttfb > prev["ttfb_s"] * 1.5:
+                  warn.append(f"응답시간이 {prev['ttfb_s']}s → {ttfb}s 로 느려졌다")
+
+          hist["runs"] = (hist["runs"] + [{"build_kb": size, "ttfb_s": round(ttfb, 3)}])[-26:]
+          json.dump(hist, open(path, "w"), indent=1, ensure_ascii=False)
+          open("/tmp/warn.txt", "w").write("\n".join(warn))
+          print(f"빌드 {size}KB / 응답 {ttfb:.3f}s / 경고 {len(warn)}건")
+          PY
+
+      - name: 회귀가 있으면 백로그에 등록
+        run: |
+          set -euo pipefail
+          [ -s /tmp/warn.txt ] || { echo "회귀 없음"; exit 0; }
+          python3 - <<'PY'
+          import datetime
+          warns = open("/tmp/warn.txt").read().strip().split("\n")
+          today = datetime.date.today().isoformat()
+          items = "\n".join(
+              f"- [ ] `review` **성능 회귀 ({today})** — {w}\n"
+              f"      측정은 `docs/metrics.json` 에 있다. 원인을 찾아 되돌리거나 이유를 적는다.\n"
+              for w in warns if w)
+          src = open("docs/BACKLOG.md", encoding="utf-8").read()
+          marker = "### P2 — 구조·성능\n"
+          src = src.replace(marker, marker + "\n" + items, 1)
+          open("docs/BACKLOG.md", "w", encoding="utf-8").write(src)
+          print(f"백로그에 {len(warns)}건 추가")
+          PY
+          git config user.name  "scout"
+          git config user.email "scout@users.noreply.github.com"
+          git add docs/BACKLOG.md docs/metrics.json
+          git commit -m "chore(scout): 성능 회귀 감지 — 백로그 등록" || exit 0
+          git push
+
+      - name: 측정값만 기록 (회귀 없을 때)
+        run: |
+          git config user.name  "scout"
+          git config user.email "scout@users.noreply.github.com"
+          git add docs/metrics.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(scout): 측정값 기록" && git push || true
+
+  gate:
+    name: 백로그 잔량 확인
+    runs-on: ubuntu-latest
+    outputs:
+      need: ${{ steps.c.outputs.need }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: c
+        run: |
+          need=$(python3 -c '
+          import json, re
+          try:
+              flags = json.load(open("ops/automation.json"))
+          except Exception:
+              print("no"); raise SystemExit
+          if not (flags.get("enabled") and flags.get("switches", {}).get("scout")):
+              print("no"); raise SystemExit
+          text = open("docs/BACKLOG.md", encoding="utf-8").read()
+          todo = text.split("## 할 일")[-1].split("## 완료")[0]
+          n = len(re.findall(r"^- \[ \]", todo, re.M))
+          print("yes" if n < 3 else "no")
+          ')
+          echo "need=$need" >> "$GITHUB_OUTPUT"
+          [ "$need" = "yes" ] || echo "::notice::백로그가 3건 이상 남아 있어 정찰을 건너뜁니다(토큰 절약)."
+
+  scout:
+    name: 새 작업 찾기 (LLM)
+    needs: gate
+    if: needs.gate.outputs.need == 'yes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --max-turns 25
+          prompt: |
+            archive-wolya.com 레포에서 **아직 백로그에 없는** 결함·공백을 찾아 등록하는 일이다.
+            구현은 하지 마라. 찾아서 적기만 한다.
+
+            먼저 `docs/BACKLOG.md` 전체를 읽어라 — "## 할 일" 뿐 아니라 **"## 완료" 와 "## 보류" 도**.
+            거기 이미 있는 것을 다시 올리면 안 된다. 그게 이 작업에서 가장 흔한 낭비다.
+
+            찾는 방법 — 추측하지 말고 코드를 직접 봐라:
+            - `grep -rn 'href="#"' src/` 처럼 **죽은 링크**를 실제로 찾는다
+            - `src/app/` 의 라우트와 화면에 보이는 메뉴·버튼을 대조해 **없는 페이지**를 찾는다
+            - `onClick` 도 `href` 도 없는 클릭할 것처럼 생긴 요소를 찾는다
+            - `layout.tsx` 의 metadata, `robots`/`sitemap`/`opengraph-image` 존재 여부
+            - 콘솔 에러를 유발할 만한 것, 접근성(alt, label, 대비)
+            - 모바일에서 깨질 만한 고정 폭·고정 높이
+
+            최대 5건만 추가한다. 각 항목은 이 형식을 지킨다:
+
+                - [ ] `auto` **한 줄 제목**
+                  왜 문제인지 1~2줄. 어느 파일인지. 무엇을 만들면 되는지.
+
+            등급 기준 — 확신이 없으면 `review` 를 붙인다:
+            - `auto`: 한 파일~몇 파일짜리 명확한 수정. 되돌리기 쉽다
+            - `review`: 브랜치 병합, 의존성, DB, 결제, 큰 구조 변경
+
+            우선순위 판단 기준은 **인스타 → 사이트 → 구매** 흐름을 막는 것이 위다.
+            디자인 취향 문제는 올리지 마라. 동작하지 않는 것만 올린다.
+
+            다 적었으면 `docs/BACKLOG.md` 를 수정하는 PR 을 연다.
+            제목은 `chore(scout): 새 작업 N건 등록`, 본문 마지막 줄에 `NEEDS-REVIEW` 를 적는다
+            (백로그 자체는 사람이 순서를 보고 판단해야 하므로 자동 병합하지 않는다).
