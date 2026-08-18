@@ -137,6 +137,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
             --max-turns 25
+            --allowedTools Edit,Read,Write,Bash,Glob,Grep
           prompt: |
             archive-wolya.com 레포에서 **아직 백로그에 없는** 결함·공백을 찾아 등록하는 일이다.
             구현은 하지 마라. 찾아서 적기만 한다.

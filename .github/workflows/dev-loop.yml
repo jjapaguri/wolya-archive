@@ -71,6 +71,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
             --max-turns 40
+            --allowedTools Edit,Read,Write,Bash,Glob,Grep
           prompt: |
             너는 archive-wolya.com (빈티지·아카이브 의류 셀렉트샵) 레포에서 혼자 일하는 개발자다.
             사람은 지금 자고 있다. 질문하지 말고 판단해서 끝까지 해라.
