@@ -27,12 +27,15 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 
 ## 현재 단계
 
+사용자 확정 순서(2026-08-18):
+
 | 단계 | 내용 | 상태 |
 |---|---|---|
-| 1 | 상품 노출 — brands, categories, products, product_variants, product_images, tags, product_tags | `001_products` |
-| 2 | 회원·주문 — users, user_social_accounts, user_addresses, carts, cart_items, orders, order_items | 미작성 |
-| 3 | 결제·배송 — payments, shipments, order_status_histories | 미작성 |
-| 4 | CS — reviews, review_images, inquiries, inquiry_answers, faqs | 미작성 |
+| 1 | 상품 정보·재고 — brands, categories, products, product_variants, product_images, tags, product_tags | `001_products` |
+| 2 | 회원 정보 — users, user_social_accounts, user_addresses | `002_users` |
+| 3 | 주문 내역 — carts, cart_items, orders, order_items | 미작성 |
+| 4 | 결제·배송 — payments, shipments, order_status_histories | 미작성 |
+| 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs | 미작성 |
 
 ## 스키마 1단계 요점
 
@@ -54,6 +57,21 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 - 대표 이미지(`is_primary`)는 상품당 1장만 — 부분 유니크 인덱스로 강제.
 - 상품 삭제는 `deleted_at` 소프트 삭제. 물리 삭제 금지.
 - `updated_at` 은 트리거가 자동 갱신하므로 앱에서 넣지 않아도 된다.
+
+## 스키마 2단계 요점 (회원)
+
+- **비밀번호는 해시만.** `users_password_is_hash` CHECK 가 bcrypt/argon2 형식이 아닌 값을 거부한다.
+  실수로 평문을 넣는 코드가 있어도 DB가 막는다.
+- **이메일은 항상 소문자로 저장.** `Test@x.com` 과 `test@x.com` 이 별개 계정이 되는 사고를 막는다.
+  앱에서 `lower()` 처리 후 저장할 것 — 안 하면 INSERT 가 거부된다.
+- **email 은 NULL 허용.** 카카오 등 소셜 제공자가 이메일을 안 주는 경우가 있다.
+  다만 로그인 수단(비밀번호 또는 소셜 연결)이 최소 1개는 있어야 하며, 이건 앱에서 보장한다.
+- **동의는 시각으로 저장.** `terms_agreed_at`, `privacy_agreed_at`(필수), `marketing_agreed_at`(선택, NULL=미동의).
+  boolean 으로 바꾸지 말 것 — 분쟁 시 "언제 동의했는지"가 증빙이다.
+- **탈퇴는 `status='withdrawn'` 과 `deleted_at` 이 반드시 함께** 움직인다 (CHECK 로 강제).
+- 같은 소셜 계정이 두 회원에게 붙을 수 없다 (`UNIQUE(provider, provider_user_id)`) — 계정 탈취 경로 차단.
+- 기본 배송지는 회원당 1개 (부분 유니크 인덱스).
+- **수집하지 않는 것**: 생년월일, 성별, 주민번호. 안 쓰는 개인정보는 컬럼 자체를 만들지 않는다.
 
 ## 백업
 
