@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const STATS = [
   { value: "300+", label: "Brands Scoped" },
   { value: "7.2k", label: "Items Tested" },
@@ -32,15 +34,15 @@ export default function MobileEditorial() {
         ))}
       </div>
 
-      <button
-        type="button"
+      <Link
+        href="/m/shop"
         className="mt-10 flex w-full items-center justify-between border border-fg bg-transparent p-4 font-sans text-xs tracking-[0.2em] text-fg uppercase transition-colors active:bg-fg active:text-bg"
       >
         <span>VIEW COLLECTIONS</span>
         <svg width="20" height="10" viewBox="0 0 20 10" fill="none" aria-hidden="true">
           <path d="M19 5H1M19 5L15 1M19 5L15 9" stroke="currentColor" strokeWidth="1.5" />
         </svg>
-      </button>
+      </Link>
     </section>
   );
 }

@@ -60,7 +60,10 @@ export default function ContentPanel() {
           </div>
         </div>
 
-        <button className="mt-10 flex w-full items-center justify-between border border-fg px-[30px] py-[15px] font-sans text-xs tracking-[0.2em] uppercase text-fg transition-all duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] hover:bg-fg hover:text-bg">
+        <Link
+          href="/shop"
+          className="mt-10 flex w-full items-center justify-between border border-fg px-[30px] py-[15px] font-sans text-xs tracking-[0.2em] uppercase text-fg transition-all duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] hover:bg-fg hover:text-bg"
+        >
           <span>View Collections</span>
           <svg
             width="20"
@@ -75,7 +78,7 @@ export default function ContentPanel() {
               strokeWidth="1.5"
             />
           </svg>
-        </button>
+        </Link>
       </div>
     </section>
   );
