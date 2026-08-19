@@ -51,12 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **상품 카드에서 상세로 가는 경로를 만든다**
-  `ProductCard.tsx` 에 링크도 `onClick` 도 없다. 상품을 눌러도 아무 일이 없다.
-  `/product/[slug]` **와 `/m/product/[slug]` 를 함께** 만들고 양쪽 카드를 각각 감싼다.
-  데이터는 당분간 `src/data/products.ts` 를 쓴다(공유 파일이라 한 번만 고치면 된다).
-  **모바일 짝을 빼먹으면 휴대폰에서 404 다.**
-
 - [ ] `auto` **메뉴 4개가 전부 `href="#"` 다 — 실제 페이지를 만든다**
   `ContentPanel.tsx` 의 `Shop / Archive / About / Contact`.
   `/shop`(전체 목록) · `/archive`(큐레이션 기록) · `/about`(브랜드 소개) · `/contact`(문의).
@@ -103,6 +97,17 @@
 ## 완료
 
 ### 2026-08-18
+
+- [x] `auto` **상품 카드에서 상세로 가는 경로를 만든다 — PR 대기 중 (`auto/product-detail-page`)**
+  `src/data/products.ts` 의 `Product` 에 `slug` 를 추가하고(`curation-001` 형식) `getProductBySlug` 조회 함수를 뒀다.
+  `src/app/product/[slug]/page.tsx` 와 `src/app/m/product/[slug]/page.tsx` 를 각각 만들었다 —
+  `generateStaticParams` 로 8개 상품 전부 빌드 타임에 정적 생성, 없는 slug 는 `notFound()`.
+  `ProductCard.tsx` / `MobileProductCard.tsx` 를 각각 `next/link` 로 감쌌다.
+  `npm run build` 로그에서 `/product/curation-001~008` 과 `/m/product/curation-001~008` 이 모두 `●(SSG)` 로
+  정적 생성됨을 확인했고, `npm run start` 로컬 프로덕션 서버에서
+  `/product/curation-001`(200), `/m/product/curation-001`(200), `/product/does-not-exist`(404),
+  홈 카드의 `href` 가 각각 `/product/curation-001` · `/m/product/curation-001` 로 걸려 있는 것을 curl 로 확인했다.
+  헤더/메뉴의 `href="#"` 는 이 항목 범위가 아니라 손대지 않았다(다음 백로그 항목).
 
 - [x] `auto` **`robots.ts` / `sitemap.ts` 추가 — PR 대기 중 (`auto/robots-sitemap`)**
   `src/app/robots.ts` 와 `src/app/sitemap.ts` 를 Next 16 App Router 방식(함수형, `MetadataRoute`)으로 만들었다.
