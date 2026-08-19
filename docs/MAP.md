@@ -35,6 +35,8 @@ src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/sh
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
 src/data/                 ★ 유일한 공유 지점. products.ts 와 Product 타입
+src/lib/                  라우트 컨벤션 파일(`opengraph-image.tsx` 등)이 공유하는 로직.
+                          `og-image.tsx` 는 데스크톱·모바일 opengraph-image 가 같이 쓰는 생성기
 ```
 
 - **새 라우트는 반드시 `/x` 와 `/m/x` 짝으로.** 한쪽만 만들면 휴대폰에서 404.

@@ -55,13 +55,6 @@ _(현재 없음)_
 
 ### P1 — 유입을 못 받는 원인 (인스타 전략에 직결)
 
-- [ ] `auto` **OG 태그와 공유 이미지가 없다**
-  `layout.tsx` 의 `metadata` 에 `title`/`description` 만 있다. `openGraph`·`twitter` 가 없어서
-  **인스타 프로필 링크나 DM 으로 주소를 보내면 미리보기 카드가 안 뜬다.** 유입 전환에 직접 손해다.
-  `opengraph-image.tsx` 로 이미지도 함께 만든다.
-  `src/app/m/layout.tsx` 에도 자체 metadata 가 있다 — **양쪽 다 손봐야 한다.**
-  모바일 쪽 `alternates.canonical` 이 `/` 로 잡혀 있는 것은 의도된 것이니 건드리지 않는다.
-
 - [ ] `auto` **푸터 법적 문서 3개가 전부 `href="#"` 다**
   `이용약관` · `개인정보처리방침` · `교환/환불 규정`.
   통신판매업 신고를 넣어둔 상태이므로 **판매 시작 전에 실제 페이지가 있어야 한다.**
@@ -88,6 +81,27 @@ _(현재 없음)_
 ## 완료
 
 ### 2026-08-19
+
+- [x] `auto` **OG 태그와 공유 이미지가 없다 — `openGraph`/`twitter` 메타와 `opengraph-image.tsx` 추가**
+  `src/app/layout.tsx` 와 `src/app/m/layout.tsx` 의 `metadata` 에 `openGraph`(title/description/url/
+  siteName/locale/type)와 `twitter`(`summary_large_image`)를 추가했다. 루트에 `metadataBase`
+  (`https://archive-wolya.com`)도 추가했다 — OG 이미지 절대경로 생성에 필요하다.
+  이미지는 `next/og` 의 `ImageResponse` 로 생성한다. 처음엔 `src/app/opengraph-image.tsx` 하나만
+  만들었는데, `/m` 쪽 `layout.tsx` 에 자체 `openGraph` 객체를 넣는 순간 Next 가 그 레벨에서
+  `openGraph` 를 통째로 새로 resolve 해버려 루트에서 상속되던 이미지가 사라지는 걸 로컬에서
+  확인했다(`/m` 응답에 `og:image` 메타 자체가 없었음). 그래서 이미지 생성 로직을
+  `src/lib/og-image.tsx` 로 뽑고 `src/app/opengraph-image.tsx` 와 `src/app/m/opengraph-image.tsx`
+  양쪽에서 각각 re-export 하는 방식으로 바꿨다 — 두 라우트 세그먼트에 파일을 각각 두는 게
+  Next 16 파일 컨벤션에서 실제로 동작하는 유일한 방법이었다.
+  `npm run lint && npm run build` 통과(무관한 기존 warning 1개만 남음), `/opengraph-image` 와
+  `/m/opengraph-image` 둘 다 정적 라우트로 생성됨을 빌드 로그로 확인했다.
+  `npm run start` 로컬 프로덕션 서버에서 `/` 와 `/m` 양쪽의 `<head>` 를 curl 로 확인 —
+  각각 자기 도메인의 `og:image`/`twitter:image` 를 가리키고(`/opengraph-image` vs
+  `/m/opengraph-image`), 두 이미지 URL 모두 200·`image/png`·1200×630 응답을 확인했다.
+  하위 라우트(`/shop`, `/product/[slug]`, `/m/shop`)도 각자 트리의 루트 이미지를 상속받는 것을
+  curl 로 확인했다. 생성된 이미지를 직접 열어 텍스트·색상(배경 `#0d0b0a`, 포인트 `#703d1f`)이
+  깨지지 않았음을 확인했다. 실제 카카오톡/인스타 DM 미리보기로는 확인하지 못했다(외부 크롤러가
+  로컬 서버에 접근할 수 없음) — 배포 후 실제 링크 공유로 확인이 필요하다.
 
 - [x] `auto` **`View Collections` 버튼이 아무 동작도 안 한다 — `/shop` `/m/shop` 으로 보내는 링크로 바꿨다**
   `ContentPanel.tsx`(데스크톱)와 `MobileEditorial.tsx`(모바일)의 `<button>` 을

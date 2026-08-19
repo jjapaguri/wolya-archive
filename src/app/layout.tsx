@@ -36,10 +36,27 @@ const maruBuri = localFont({
   ],
 });
 
+const title = "WOLYA ARCHIVE | Curated Fashion Select Shop";
+const description =
+  "300여 개 브랜드, 7,000벌 이상의 시도 끝에 선별한 아이템들. 동대문에서 선별한 트렌디하고 힙한 아이템들을 감각적인 큐레이션으로 합리적인 가격에 제안하는 셀렉트샵.";
+
 export const metadata: Metadata = {
-  title: "WOLYA ARCHIVE | Curated Fashion Select Shop",
-  description:
-    "300여 개 브랜드, 7,000벌 이상의 시도 끝에 선별한 아이템들. 동대문에서 선별한 트렌디하고 힙한 아이템들을 감각적인 큐레이션으로 합리적인 가격에 제안하는 셀렉트샵.",
+  metadataBase: new URL("https://archive-wolya.com"),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    siteName: "WOLYA ARCHIVE",
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
