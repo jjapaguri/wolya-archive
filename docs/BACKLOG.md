@@ -51,9 +51,7 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **`View Collections` 버튼이 아무 동작도 안 한다**
-  `ContentPanel.tsx` 의 `<button>` 에 핸들러가 없다. `/shop` 으로 보내는 링크로 바꾼다.
-  `/shop` 항목보다 나중에 한다(없는 곳으로 보내면 안 된다).
+_(현재 없음)_
 
 ### P1 — 유입을 못 받는 원인 (인스타 전략에 직결)
 
@@ -90,6 +88,16 @@
 ## 완료
 
 ### 2026-08-19
+
+- [x] `auto` **`View Collections` 버튼이 아무 동작도 안 한다 — `/shop` `/m/shop` 으로 보내는 링크로 바꿨다**
+  `ContentPanel.tsx`(데스크톱)와 `MobileEditorial.tsx`(모바일)의 `<button>` 을
+  각각 `next/link` 의 `<Link href="/shop">` / `<Link href="/m/shop">` 으로 바꿨다.
+  기존 클래스·아이콘·문구는 그대로 뒀다.
+  `npm run lint` 통과(기존에 있던 `DesktopViewLink.tsx` 의 무관한 warning 1개만 남음),
+  `npm run build` 통과, 31개 라우트 전부 정적 생성 확인.
+  `npm run start` 로컬 프로덕션 서버에서 `/` 와 `/m` 양쪽에서
+  `View Collections`/`VIEW COLLECTIONS` 버튼의 `href` 가 각각 `/shop`·`/m/shop` 인 것을 curl 로 확인했고,
+  두 경로 모두 200 응답도 확인했다. 실제 브라우저로는 보지 않았다.
 
 - [x] `auto` **메뉴 4개(`Shop/Archive/About/Contact`)가 전부 `href="#"` 였다 — 실제 페이지를 만들었다**
   `/shop`(전체 상품 목록, `ProductCard` 재사용) · `/about`(브랜드 소개, `ContentPanel` 문구 재사용) ·
