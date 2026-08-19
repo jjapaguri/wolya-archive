@@ -30,8 +30,8 @@
 
 ```
 src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts 아님 (Next 16에서 deprecated)
-src/app/                  데스크톱 라우트
-src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝
+src/app/                  데스크톱 라우트 — /shop /archive /about /contact /product/[slug]
+src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/product/[slug])
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
 src/data/                 ★ 유일한 공유 지점. products.ts 와 Product 타입

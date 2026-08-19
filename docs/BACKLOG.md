@@ -51,13 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **메뉴 4개가 전부 `href="#"` 다 — 실제 페이지를 만든다**
-  `ContentPanel.tsx` 의 `Shop / Archive / About / Contact`.
-  `/shop`(전체 목록) · `/archive`(큐레이션 기록) · `/about`(브랜드 소개) · `/contact`(문의).
-  내용이 아직 없으면 최소 골격 + "준비 중" 이라도 만든다. **링크가 죽어 있는 것보다 낫다.**
-  **`/m/shop` `/m/archive` `/m/about` `/m/contact` 도 같이 만든다.** 안 그러면 휴대폰에서 404 다.
-  모바일 쪽 메뉴 진입점은 `MobileHeader.tsx` 를 본다.
-
 - [ ] `auto` **`View Collections` 버튼이 아무 동작도 안 한다**
   `ContentPanel.tsx` 의 `<button>` 에 핸들러가 없다. `/shop` 으로 보내는 링크로 바꾼다.
   `/shop` 항목보다 나중에 한다(없는 곳으로 보내면 안 된다).
@@ -95,6 +88,20 @@
 ---
 
 ## 완료
+
+### 2026-08-19
+
+- [x] `auto` **메뉴 4개(`Shop/Archive/About/Contact`)가 전부 `href="#"` 였다 — 실제 페이지를 만들었다**
+  `/shop`(전체 상품 목록, `ProductCard` 재사용) · `/about`(브랜드 소개, `ContentPanel` 문구 재사용) ·
+  `/archive`·`/contact`(내용이 아직 없어 "준비 중" 골격 + 관련 링크만).
+  `/m/shop` `/m/archive` `/m/about` `/m/contact` 를 데스크톱과 짝으로 같이 만들었다.
+  `ContentPanel.tsx` 와 `MobileHeader.tsx` 의 `href="#"` 를 각각 실제 경로로 바꾸고 `next/link` 로 교체했다.
+  `sitemap.ts` 에 4개 데스크톱 경로를 추가했다(`/m/*` 는 기존처럼 canonical 이 `/` 라 생략).
+  `npm run lint && npm run build` 통과, 8개 라우트 전부 `●/○`(정적) 생성 확인.
+  `npm run start` 로컬 프로덕션 서버에서 8개 경로 전부 curl 200 확인,
+  `/` `/m` 홈 페이지의 nav `href` 가 각각 새 경로를 가리키는 것도 curl 로 확인했다.
+  실제 브라우저(휴대폰 포함)로는 보지 않았다.
+  `View Collections` 버튼 연결은 이 항목 범위가 아니라 다음 항목으로 남겨둔다.
 
 ### 2026-08-18
 
