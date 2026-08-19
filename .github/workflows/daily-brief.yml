@@ -1,0 +1,167 @@
+name: Daily Brief
+
+# 매일 아침 서버 상태를 읽어 이상이 있을 때만 GitHub Issue 를 연다.
+#
+# 왜 Cowork 예약 작업이 아니라 여기인가:
+#   Cowork 예약 세션은 무인 실행이라 WebFetch 가 승인 대기(PROVENANCE_REQUIRED)로 전부 막힌다.
+#   승인해 줄 사람이 없어 브리핑이 매일 실패했다. Actions 러너는 그 제약이 없다.
+#
+# 왜 메일이 아니라 Issue 인가:
+#   메일을 보내려면 외부 메일 서비스 자격증명이 필요하다. Issue 를 열면 GitHub 이
+#   저장소 소유자에게 알림 메일을 자동으로 보낸다. 자격증명 0개로 같은 효과가 난다.
+
+on:
+  schedule:
+    - cron: "0 23 * * *"      # 08:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+
+      - name: 상태 피드 가져오기
+        id: fetch
+        env:
+          FEED_URL: ${{ secrets.OPS_FEED_URL }}
+        run: |
+          if [ -z "${FEED_URL:-}" ]; then
+            echo "state=nosecret" >> "$GITHUB_OUTPUT"
+            echo "::warning::OPS_FEED_URL 시크릿이 없습니다. 저장소 Settings → Secrets 에 추가하세요."
+            exit 0
+          fi
+          if curl -fsS --max-time 25 "$FEED_URL" -o feed.json; then
+            echo "state=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "state=unreachable" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 판정하고 필요하면 Issue 열기
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATE: ${{ steps.fetch.outputs.state }}
+        run: |
+          set -uo pipefail
+
+          if [ "$STATE" = "nosecret" ]; then
+            echo "시크릿 미설정 — 조용히 종료"; exit 0
+          fi
+
+          if [ "$STATE" = "unreachable" ]; then
+            gh issue create \
+              --title "[월야 긴급] 서버 상태 피드에 접근하지 못했습니다" \
+              --body "$(date -u '+%F %T UTC') 기준으로 상태 피드가 응답하지 않습니다.
+
+          가능성:
+          - 서버(Lightsail)가 내려갔다
+          - nginx 의 /ops-feed/ 설정이 사라졌다
+          - 피드 토큰이 바뀌었는데 OPS_FEED_URL 시크릿이 옛날 값이다
+
+          확인: 브라우저로 https://archive-wolya.com 이 뜨는지 먼저 보세요.
+          사이트가 정상인데 피드만 안 되면 서버가 아니라 피드 설정 문제입니다." \
+              --label "ops" 2>/dev/null || \
+            gh issue create \
+              --title "[월야 긴급] 서버 상태 피드에 접근하지 못했습니다" \
+              --body "상태 피드가 응답하지 않습니다. 브라우저로 https://archive-wolya.com 확인 필요."
+            exit 0
+          fi
+
+          python3 - <<'PY' > brief.md
+          import json, datetime
+
+          d = json.load(open("feed.json"))
+          auto = d.get("automation") or {}
+          rep  = d.get("daily_report") or {}
+          srv  = d.get("server") or {}
+          alerts = d.get("alerts_48h") or []
+
+          crit = [a for a in alerts if a.get("level") == "critical"]
+          warn = [a for a in alerts if a.get("level") == "warn"]
+
+          problems = []
+          if crit:
+              problems.append(f"critical 알림 {len(crit)}건")
+          if srv.get("pm2") != "online":
+              problems.append(f"PM2 상태가 {srv.get('pm2')}")
+          try:
+              if int(srv.get("disk_used_pct") or 0) >= 85:
+                  problems.append(f"디스크 {srv.get('disk_used_pct')}%")
+          except ValueError:
+              pass
+          if not auto.get("enabled"):
+              problems.append("자동화 전체가 꺼져 있음")
+
+          # 서버가 critical 알림을 남겼더라도 48시간 창을 벗어날 수 있으므로
+          # 점검 수치 자체를 한 번 더 본다. 돈이 새는 항목은 놓치면 안 된다.
+          SERIOUS = {
+              "oversell_risk":    "재고 0인데 판매중",
+              "webhook_lost":     "결제됨인데 payments 없음",
+              "payment_orphan":   "결제 성공했는데 주문 pending",
+              "published_no_variant": "variant 없는 판매중 상품",
+          }
+          for key, label in SERIOUS.items():
+              n = (rep.get("checks") or {}).get(key) or 0
+              if n:
+                  problems.append(f"{label} {n}건")
+
+          # 백업이 어제/오늘 것인지
+          backup = srv.get("backup_latest") or ""
+          today = datetime.date.today()
+          if backup:
+              recent = any(
+                  (today - datetime.timedelta(days=n)).strftime("%Y%m%d") in backup
+                  for n in (0, 1)
+              )
+              if not recent:
+                  problems.append(f"최근 백업이 오래됨 ({backup})")
+          else:
+              problems.append("백업 파일을 찾을 수 없음")
+
+          print("PROBLEMS=" + ("|".join(problems) if problems else ""))
+          print("---")
+          print(f"- 배포: `{srv.get('deployed_sha')}` — {srv.get('deployed_subject')}")
+          print(f"- PM2 {srv.get('pm2')} / 디스크 {srv.get('disk_used_pct')}% / 메모리 {srv.get('mem_used_pct')}%")
+          print(f"- 백업: {backup or '없음'}")
+          state = rep.get("state")
+          if state == "dormant":
+              print("- 일일 점검: 휴면 (상품·주문 0건 — 정상)")
+          else:
+              checks = rep.get("checks") or {}
+              hit = {k: v for k, v in checks.items() if v}
+              print(f"- 일일 점검: 상품 {rep.get('products')} / 주문 {rep.get('orders')}"
+                    + (f" — 걸린 항목: {hit}" if hit else " — 이상 없음"))
+          if crit:
+              print("\n**critical**")
+              for a in crit[-5:]:
+                  print(f"- `{a.get('at','')[:16]}` {a.get('message')}")
+          if warn:
+              print("\n**warn**")
+              for a in warn[-5:]:
+                  print(f"- `{a.get('at','')[:16]}` {a.get('message')}")
+          if d.get("diagnosis"):
+              print("\n**서버 에이전트 자동 진단**\n")
+              print(d["diagnosis"][:1500])
+          PY
+
+          problems=$(head -1 brief.md | sed 's/^PROBLEMS=//')
+          body=$(tail -n +3 brief.md)
+
+          if [ -z "$problems" ]; then
+            echo "::notice::이상 없음 — Issue 를 열지 않습니다."
+            echo "$body"
+            exit 0
+          fi
+
+          gh issue create \
+            --title "[월야] $(TZ=Asia/Seoul date +%m/%d) 점검 — ${problems}" \
+            --body "$body
+
+          ---
+          자동 생성. 멈추려면 \`ops/automation.json\` 의 \`enabled\` 를 false 로."
