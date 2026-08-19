@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const NAV_ITEMS = [
-  { label: "Shop", href: "#" },
-  { label: "Archive", href: "#" },
-  { label: "About", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "Shop", href: "/m/shop" },
+  { label: "Archive", href: "/m/archive" },
+  { label: "About", href: "/m/about" },
+  { label: "Contact", href: "/m/contact" },
 ];
 
 export default function MobileHeader() {
@@ -83,14 +84,14 @@ export default function MobileHeader() {
 
         <nav className="flex flex-col gap-8 text-center text-sm font-light tracking-[0.15em] uppercase">
           {NAV_ITEMS.map((item) => (
-            <a
+            <Link
               key={item.label}
               href={item.href}
               onClick={() => setIsOpen(false)}
               className="text-fg transition-colors hover:text-accent"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 

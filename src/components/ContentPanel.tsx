@@ -1,4 +1,11 @@
-const navLinks = ["Shop", "Archive", "About", "Contact"];
+import Link from "next/link";
+
+const navLinks = [
+  { label: "Shop", href: "/shop" },
+  { label: "Archive", href: "/archive" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
 
 export default function ContentPanel() {
   return (
@@ -13,13 +20,13 @@ export default function ContentPanel() {
     >
       <nav className="mb-[60px] flex justify-end gap-5 font-sans text-[11px] tracking-[0.1em] uppercase">
         {navLinks.map((link) => (
-          <a
-            key={link}
-            href="#"
+          <Link
+            key={link.label}
+            href={link.href}
             className="text-fg transition-colors duration-300 hover:text-accent"
           >
-            {link}
-          </a>
+            {link.label}
+          </Link>
         ))}
       </nav>
 
