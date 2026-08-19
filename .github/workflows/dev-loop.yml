@@ -70,7 +70,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --max-turns 40
+            --max-turns 60
             --allowedTools Edit,Read,Write,Bash,Glob,Grep
           prompt: |
             너는 archive-wolya.com (빈티지·아카이브 의류 셀렉트샵) 레포에서 혼자 일하는 개발자다.
@@ -148,7 +148,13 @@ jobs:
   automerge:
     name: 조건 충족 시 자동 병합
     needs: develop
-    if: always() && needs.develop.result == 'success'
+    # needs.develop 의 성공 여부를 조건에 걸지 않는다.
+    # --max-turns 를 넘기면 action 은 작업을 다 끝냈어도 job 을 실패로 표시한다.
+    # 실제로 2026-08-19 새벽 실행에서 PR #3 이 완성·CI 통과 상태였는데
+    # 46턴(상한 40)이라는 이유로 job 이 실패했고, 그 때문에 병합 판정 자체가 돌지 않아
+    # 검증 끝난 PR 이 그냥 방치됐다.
+    # 안전장치는 턴 수가 아니라 PR 자체의 검사(CI 초록불 + automerge_check.py)다.
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
