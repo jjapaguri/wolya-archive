@@ -30,13 +30,15 @@
 
 ```
 src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts 아님 (Next 16에서 deprecated)
-src/app/                  데스크톱 라우트 — /shop /archive /about /contact /product/[slug]
-src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/product/[slug])
+src/app/                  데스크톱 라우트 — /shop /archive /about /contact /product/[slug] /legal/[slug]
+src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/product/[slug] /m/legal/[slug])
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
 src/data/                 ★ 유일한 공유 지점. products.ts 와 Product 타입
 src/lib/                  라우트 컨벤션 파일(`opengraph-image.tsx` 등)이 공유하는 로직.
-                          `og-image.tsx` 는 데스크톱·모바일 opengraph-image 가 같이 쓰는 생성기
+                          `og-image.tsx` 는 데스크톱·모바일 opengraph-image 가 같이 쓰는 생성기.
+                          `legal-content.ts` 는 이용약관/개인정보처리방침/교환·환불 규정 텍스트
+                          (데스크톱·모바일 /legal/[slug] 페이지가 같이 씀, 법률 검토 전 초안)
 ```
 
 - **새 라우트는 반드시 `/x` 와 `/m/x` 짝으로.** 한쪽만 만들면 휴대폰에서 404.

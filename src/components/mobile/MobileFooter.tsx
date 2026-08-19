@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import DesktopViewLink from "./DesktopViewLink";
 
 function Row({
@@ -77,11 +78,11 @@ export default function MobileFooter() {
       <div className="mb-6 h-px w-full bg-fg/10" />
 
       <div className="mb-8 flex justify-center gap-4 text-[9px] tracking-[0.1em] text-fg/50 uppercase">
-        <a href="#">이용약관</a>
+        <Link href="/m/legal/terms">이용약관</Link>
         <span className="text-fg/20">|</span>
-        <a href="#">개인정보처리방침</a>
+        <Link href="/m/legal/privacy">개인정보처리방침</Link>
         <span className="text-fg/20">|</span>
-        <a href="#">교환/환불 규정</a>
+        <Link href="/m/legal/refund">교환/환불 규정</Link>
       </div>
 
       <div className="mb-6 text-center">
