@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function InstagramIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -39,7 +41,11 @@ const supportFields = [
   { label: "반품 주소", value: "[실제 반품 수령 주소]" },
 ];
 
-const legalLinks = ["이용약관", "개인정보처리방침", "교환/환불 규정"];
+const legalLinks = [
+  { label: "이용약관", href: "/legal/terms" },
+  { label: "개인정보처리방침", href: "/legal/privacy" },
+  { label: "교환/환불 규정", href: "/legal/refund" },
+];
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
@@ -108,11 +114,11 @@ export default function SiteFooter() {
         <div className="mx-auto h-px max-w-[1200px] bg-border" />
 
         <div className="mx-auto flex max-w-[1200px] flex-wrap justify-center gap-5 py-[30px] text-[11px] tracking-[0.1em] uppercase">
-          {legalLinks.map((label, i) => (
-            <span key={label} className="flex items-center gap-5">
-              <a href="#" className="text-fg/50 transition-colors hover:text-accent">
-                {label}
-              </a>
+          {legalLinks.map((link, i) => (
+            <span key={link.href} className="flex items-center gap-5">
+              <Link href={link.href} className="text-fg/50 transition-colors hover:text-accent">
+                {link.label}
+              </Link>
               {i < legalLinks.length - 1 && <span className="text-fg/20">|</span>}
             </span>
           ))}

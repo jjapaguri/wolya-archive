@@ -55,11 +55,6 @@ _(현재 없음)_
 
 ### P1 — 유입을 못 받는 원인 (인스타 전략에 직결)
 
-- [ ] `auto` **푸터 법적 문서 3개가 전부 `href="#"` 다**
-  `이용약관` · `개인정보처리방침` · `교환/환불 규정`.
-  통신판매업 신고를 넣어둔 상태이므로 **판매 시작 전에 실제 페이지가 있어야 한다.**
-  초안을 만들되 문서 상단에 "법률 검토 전 초안" 을 명시한다.
-
 - [ ] `auto` **FAQ 의 `See more FAQ` 가 `href="#"`** → `/faq` 를 만들거나 버튼을 없앤다
 
 ### P2 — 구조·성능
@@ -81,6 +76,22 @@ _(현재 없음)_
 ## 완료
 
 ### 2026-08-19
+
+- [x] `auto` **푸터 법적 문서 3개가 전부 `href="#"` 였다 — 이용약관/개인정보처리방침/교환·환불 규정 초안 페이지를 만들었다**
+  `src/lib/legal-content.ts` 에 세 문서(이용약관·개인정보처리방침·교환/환불 규정)의 조항 텍스트를
+  구조화된 데이터로 두고, `src/app/legal/[slug]/page.tsx` 와 `src/app/m/legal/[slug]/page.tsx` 가
+  같은 데이터를 각자 스타일로 렌더링한다 — 데이터는 공유하되 화면은 데스크톱/모바일 독립을 유지.
+  각 페이지 상단에 "법률 검토 전 초안" 경고 배너를 넣어 실제 사업자 정보·조항 확정 전임을 명시했다.
+  본문은 전자상거래법 기준(청약철회 7일, 단벌 상품 재고 소진 시 자동 취소 등)을 반영한 표준형 초안이고,
+  사업자등록번호·주소 등 미확정 값은 기존 푸터와 같은 방식으로 대괄호 placeholder 로 남겼다.
+  `SiteFooter.tsx` 와 `MobileFooter.tsx` 의 `href="#"` 세 개를 각각 `/legal/terms` `/legal/privacy`
+  `/legal/refund` (모바일은 `/m/legal/*`) 로 바꾸고 `next/link` 를 썼다. `sitemap.ts` 에 세 경로 추가.
+  `npm run lint && npm run build` 통과 — 6개 라우트(`/legal/terms|privacy|refund`, `/m/legal/*`)
+  모두 `generateStaticParams` 로 정적 생성됨을 빌드 로그로 확인했다.
+  `npm run start` 로컬 프로덕션 서버에서 6개 경로 전부 curl 200, 잘못된 slug(`/legal/nope`)는 404,
+  `/` 와 `/m` 홈의 푸터 `href` 가 각각 새 경로를 가리키는 것, `<title>` 과 경고 배너 텍스트가
+  정상 렌더링되는 것을 확인했다. 실제 브라우저(휴대폰 포함)로는 보지 않았고, 법률 검토는
+  당연히 받지 않았다 — 배너에 명시한 대로 판매 시작 전 변호사 검토가 필요하다.
 
 - [x] `auto` **OG 태그와 공유 이미지가 없다 — `openGraph`/`twitter` 메타와 `opengraph-image.tsx` 추가**
   `src/app/layout.tsx` 와 `src/app/m/layout.tsx` 의 `metadata` 에 `openGraph`(title/description/url/
