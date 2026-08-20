@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import GrainOverlay from "@/components/GrainOverlay";
 import MobileHeader from "@/components/mobile/MobileHeader";
 import MobileFooter from "@/components/mobile/MobileFooter";
-import MobileProductCard from "@/components/mobile/MobileProductCard";
+import MobileShopGrid from "@/components/mobile/MobileShopGrid";
 import { products } from "@/data/products";
 
 export const metadata: Metadata = {
@@ -26,11 +26,7 @@ export default function MobileShopPage() {
           #전체 아이템
         </span>
 
-        <div className="flex flex-col items-center gap-6">
-          {products.map((product) => (
-            <MobileProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <MobileShopGrid products={products} />
       </main>
 
       <MobileFooter />

@@ -60,7 +60,7 @@ export default function MobileProductCard({ product }: { product: Product }) {
         </div>
       </div>
 
-      <div className="mt-4 text-[10px] tracking-[0.05em] text-accent">{product.categories}</div>
+      <div className="mt-4 text-[10px] tracking-[0.05em] text-accent">{product.tags}</div>
     </Link>
   );
 }

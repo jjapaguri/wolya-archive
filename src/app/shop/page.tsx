@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import GrainOverlay from "@/components/GrainOverlay";
 import SiteFooter from "@/components/SiteFooter";
-import ProductCard from "@/components/ProductCard";
+import ShopGrid from "@/components/ShopGrid";
 import { products } from "@/data/products";
 
 export const metadata: Metadata = {
@@ -26,11 +26,7 @@ export default function ShopPage() {
           #전체 아이템
         </span>
 
-        <div className="flex flex-wrap gap-6">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ShopGrid products={products} />
       </main>
       <SiteFooter />
     </>

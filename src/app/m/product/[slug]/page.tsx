@@ -116,7 +116,7 @@ export default async function MobileProductDetailPage({
           </div>
         </div>
 
-        <div className="mt-5 text-[10px] tracking-[0.05em] text-accent">{product.categories}</div>
+        <div className="mt-5 text-[10px] tracking-[0.05em] text-accent">{product.tags}</div>
       </main>
 
       <MobileFooter />
