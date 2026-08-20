@@ -103,9 +103,14 @@ export default function SiteFooter() {
         <div className="mx-auto h-px max-w-[1200px] bg-border" />
 
         <div className="mx-auto flex max-w-[1200px] flex-col gap-3 py-[30px] font-kr text-sm text-fg/70 lg:flex-row lg:gap-10">
-          <span className="flex items-center gap-2">
-            <InstagramIcon /> 인스타그램 @[계정명]
-          </span>
+          <a
+            href="https://instagram.com/iwannabebratpitt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 transition-colors hover:text-accent"
+          >
+            <InstagramIcon /> 인스타그램 @iwannabebratpitt
+          </a>
           <span className="flex items-center gap-2">
             <KakaoIcon /> 카카오톡 채널 [채널명/링크]
           </span>
