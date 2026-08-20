@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@/data/products";
+import { formatPrice, type Product } from "@/data/products";
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
@@ -18,17 +18,34 @@ export default function ProductCard({ product }: { product: Product }) {
         />
       </div>
 
-      <div className="mb-2 font-sans text-[9px] tracking-[0.2em] text-accent uppercase">
-        {product.tag}
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <span className="font-sans text-[9px] tracking-[0.2em] text-accent uppercase">
+          {product.tag}
+        </span>
+        <span className="font-sans text-[9px] tracking-[0.1em] text-fg/40 uppercase">
+          {product.size}
+        </span>
+      </div>
+
+      <div className="mb-1 font-sans text-[10px] tracking-[0.15em] text-fg/50 uppercase">
+        {product.brand}
       </div>
       <div className="word-keep-all mb-1 font-maruburi text-base font-medium text-fg">
         {product.name}
       </div>
-      <div className="word-keep-all mb-5 font-kr text-[13px] font-light text-fg/70">
+      <div className="word-keep-all mb-4 font-kr text-[13px] font-light text-fg/70">
         {product.hook}
       </div>
 
+      <div className="mb-5 font-serif text-xl text-accent">{formatPrice(product.price)}</div>
+
       <div className="flex flex-col gap-2.5 border-t border-border pt-4">
+        <div className="word-keep-all font-kr text-[11px] leading-[1.6] text-fg/50">
+          <strong className="mb-0.5 block text-[10px] font-medium tracking-[0.1em] text-fg/80 uppercase">
+            상태
+          </strong>
+          {product.condition}
+        </div>
         <div className="word-keep-all font-kr text-[11px] leading-[1.6] text-fg/50">
           <strong className="mb-0.5 block text-[10px] font-medium tracking-[0.1em] text-fg/80 uppercase">
             원단
@@ -49,7 +66,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="word-keep-all font-kr text-[11px] leading-[1.6] text-fg/50">
           <strong className="mb-0.5 block text-[10px] font-medium tracking-[0.1em] text-fg/80 uppercase">
-            사입 수량
+            재고
           </strong>
           <span className="mt-1 inline-block font-serif text-lg text-accent italic">
             {product.stock}
