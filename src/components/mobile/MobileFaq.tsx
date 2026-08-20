@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 function Figure({ children }: { children: ReactNode }) {
   return <em className="px-0.5 font-serif text-base text-accent not-italic">{children}</em>;
@@ -64,12 +65,12 @@ export default function MobileFaq() {
       </div>
 
       <div className="mt-10 text-center">
-        <a
-          href="#"
+        <Link
+          href="/m/faq"
           className="inline-block border border-fg px-8 py-4 font-sans text-[10px] tracking-[0.2em] text-fg uppercase transition-colors active:bg-fg active:text-bg"
         >
           See more FAQ
-        </a>
+        </Link>
       </div>
     </section>
   );

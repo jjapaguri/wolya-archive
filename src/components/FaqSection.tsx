@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const faqs = [
   {
     q: "정말 다 직접 입어보고 파는 건가요?",
@@ -57,12 +59,12 @@ export default function FaqSection() {
         </div>
 
         <div className="mt-[60px] text-center">
-          <a
-            href="#"
+          <Link
+            href="/faq"
             className="inline-block border border-fg px-10 py-[15px] font-sans text-[11px] tracking-[0.2em] text-fg uppercase transition-all duration-300 hover:bg-fg hover:text-bg"
           >
             See more FAQ
-          </a>
+          </Link>
         </div>
       </div>
     </section>

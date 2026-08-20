@@ -55,7 +55,7 @@ _(현재 없음)_
 
 ### P1 — 유입을 못 받는 원인 (인스타 전략에 직결)
 
-- [ ] `auto` **FAQ 의 `See more FAQ` 가 `href="#"`** → `/faq` 를 만들거나 버튼을 없앤다
+_(현재 없음)_
 
 ### P2 — 구조·성능
 
@@ -74,6 +74,21 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-20
+
+- [x] `auto` **FAQ 의 `See more FAQ` 가 `href="#"` 였다 — `/faq` `/m/faq` 페이지를 만들었다**
+  `src/lib/faq-content.ts` 에 홈 티저(4개)보다 넓은 9개 질문/답변을 구조화된 데이터로 뒀다 —
+  결제·배송·환불 소요기간·단벌 재고·비회원 주문 등은 `src/lib/legal-content.ts` 의 이용약관/
+  교환·환불 규정 초안과 사실관계를 맞췄다(예: 청약철회 7일, 배송 영업일 3일 이내, 환불 3~5일 이내).
+  `src/app/faq/page.tsx` 와 `src/app/m/faq/page.tsx` 가 같은 데이터를 각자 스타일로 렌더링한다.
+  `FaqSection.tsx`(데스크톱)와 `MobileFaq.tsx`(모바일)의 `See more FAQ` `href="#"` 를 각각
+  `next/link` 로 `/faq` `/m/faq` 로 교체했다. 홈에 있던 4개짜리 티저 목록 자체는 그대로 뒀다.
+  `sitemap.ts` 에 `/faq` 추가(`/m/faq` 는 기존 패턴대로 `/m` canonical 에 흡수).
+  `npm run lint && npm run build` 통과 — `/faq` `/m/faq` 둘 다 정적 라우트 생성 확인.
+  `npm run start` 로컬 프로덕션 서버에서 `/faq`·`/m/faq` curl 200, `<title>` 정상,
+  `/`·`/m` 홈의 `href="/faq"`·`href="/m/faq"` 존재, `sitemap.xml` 에 `/faq` 포함을 확인했다.
+  실제 브라우저(휴대폰 포함)로는 보지 않았다.
 
 ### 2026-08-19
 
