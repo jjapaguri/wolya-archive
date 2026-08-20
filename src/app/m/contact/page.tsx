@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 };
 
 const channels = [
-  { label: "인스타그램", value: "@[계정명]" },
-  { label: "카카오톡", value: "[채널명/링크]" },
+  { label: "인스타그램", value: "@iwannabebratpitt", href: "https://instagram.com/iwannabebratpitt" },
+  { label: "카카오톡", value: "아카이브_월야", href: "http://pf.kakao.com/_bvxlSX" },
 ];
 
 export default function MobileContactPage() {
@@ -42,7 +42,14 @@ export default function MobileContactPage() {
               <span className="min-w-[90px] text-[10px] font-medium tracking-[0.15em] text-accent uppercase">
                 {channel.label}
               </span>
-              <span className="text-fg/80">{channel.value}</span>
+              <a
+                href={channel.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-fg/80 underline underline-offset-4 active:opacity-50"
+              >
+                {channel.value}
+              </a>
             </div>
           ))}
         </div>
