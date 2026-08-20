@@ -26,9 +26,12 @@ export default function MobileHeader() {
   return (
     <>
       <header className="fixed top-0 left-0 z-40 flex w-full items-center justify-between border-b border-fg/10 bg-bg/80 px-6 py-4 backdrop-blur-md">
-        <div className="font-serif text-xl font-semibold tracking-widest text-fg uppercase">
+        <Link
+          href="/m"
+          className="font-serif text-xl font-semibold tracking-widest text-fg uppercase"
+        >
           Wolya
-        </div>
+        </Link>
         <button
           type="button"
           onClick={() => setIsOpen(true)}

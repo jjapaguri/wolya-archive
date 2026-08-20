@@ -51,13 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **월야 로고를 눌러도 홈으로 안 간다**
-  데스크톱 `Sidebar.tsx:4` 의 `[W-ARCHV]` 와 모바일 `MobileHeader.tsx` 의 `Wolya` 가
-  둘 다 그냥 `<div>` 다. 링크가 아니다. 상세페이지·서브페이지에서 홈으로 돌아갈 방법이
-  브라우저 뒤로가기밖에 없다 — 웹에서 로고 클릭은 사실상 표준 동작이라 없으면 이탈로 이어진다.
-  `<Link href="/">` / `<Link href="/m">` 로 감싼다. **양쪽 다.**
-  덤: 데스크톱 로고가 `[W-ARCHV]` 라는 자리표시자처럼 생긴 문자열이다. 실제 브랜드 표기로 정리할 것.
-
 - [ ] `auto` **상품 카테고리를 top / bottom / accessory / shoes 로 나눈다**
   지금 `src/data/products.ts` 의 `categories` 는 `"#스트릿 #카고 #보온성"` 같은 **해시태그 문자열**이라
   분류가 아니라 장식이다. 카테고리로 거를 수가 없다.
@@ -100,6 +93,16 @@ _(현재 없음)_
 ## 완료
 
 ### 2026-08-20
+
+- [x] `auto` **월야 로고를 눌러도 홈으로 안 간다 — 로고를 `<Link>` 로 감쌌다**
+  데스크톱 `Sidebar.tsx` 의 `[W-ARCHV]` 자리표시자 문자열을 `<Link href="/">WOLYA ARCHIVE</Link>` 로,
+  모바일 `MobileHeader.tsx` 의 `Wolya` `<div>` 를 `<Link href="/m">` 로 각각 바꿨다.
+  `Sidebar` 는 홈페이지 `HeroSection` 에서만 쓰여서(서브페이지엔 없음) 영향 범위는 홈 로고 클릭 하나뿐이고,
+  서브페이지들은 이미 자체 "← 홈으로" 링크를 갖고 있었다(`shop`/`product/[slug]` 등에서 확인).
+  `MobileHeader` 는 모든 `/m/*` 페이지의 공통 헤더라 이 변경이 전체 모바일 라우트에 적용된다.
+  `npm run lint && npm run build` 통과(기존 `DesktopViewLink.tsx` 무관 warning 1개만 남음), 41개 라우트 정적 생성 확인.
+  `npm run start` 로컬 프로덕션 서버에서 `/`(로고 `href="/"`)와 `/m`, `/m/shop`(로고 `href="/m"`)을
+  curl 로 확인했다. 실제 브라우저(휴대폰 포함)로는 보지 않았다.
 
 - [x] `auto` **FAQ 의 `See more FAQ` 가 `href="#"` 였다 — `/faq` `/m/faq` 페이지를 만들었다**
   `src/lib/faq-content.ts` 에 홈 티저(4개)보다 넓은 9개 질문/답변을 구조화된 데이터로 뒀다 —
