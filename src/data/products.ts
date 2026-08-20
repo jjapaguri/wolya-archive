@@ -9,6 +9,17 @@
  * export 이름을 유지하면 화면 코드는 수정할 필요가 없다.
  */
 
+export type ProductCategory = "top" | "bottom" | "accessory" | "shoes";
+
+export const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  top: "상의",
+  bottom: "하의",
+  accessory: "액세서리",
+  shoes: "신발",
+};
+
+export const CATEGORIES: ProductCategory[] = ["top", "bottom", "accessory", "shoes"];
+
 export type Product = {
   id: number;
   slug: string;
@@ -31,7 +42,10 @@ export type Product = {
   measurements: string;
   stock: string;
   recommendedFor: string;
-  categories: string;
+  /** 필터용 분류 — top/bottom/accessory/shoes 4종 고정 */
+  category: ProductCategory;
+  /** 검색·분위기 표현용 해시태그. 분류가 아니다 */
+  tags: string;
 };
 
 const IMG = "https://image.production.fruitsfamily.com/public/product/resized%40width1125";
@@ -56,7 +70,8 @@ export const products: Product[] = [
     measurements: "판매자 미기재 — 입고 즉시 어깨·가슴·소매·총장 4개 실측해 갱신",
     stock: "1점 한정",
     recommendedFor: "무지 티 위에 툭 걸치는 간절기 아우터를 찾는 사람",
-    categories: "#데님자켓 #트러커 #워시드 #이예 #간절기",
+    category: "top",
+    tags: "#데님자켓 #트러커 #워시드 #이예 #간절기",
   },
   {
     id: 2,
@@ -80,7 +95,8 @@ export const products: Product[] = [
     measurements: "판매자 미기재 — 입고 후 가로·세로·스트랩 드롭 실측 예정",
     stock: "1점 한정",
     recommendedFor: "옷은 단순하게 입고 가방 하나로 끝내는 사람",
-    categories: "#숄더백 #퍼백 #자개단추 #TWIYO #컨템포러리",
+    category: "accessory",
+    tags: "#숄더백 #퍼백 #자개단추 #TWIYO #컨템포러리",
   },
   {
     id: 3,
@@ -105,7 +121,8 @@ export const products: Product[] = [
     measurements: "총장 66cm / 가슴 단면 58.5cm (측정 방식에 따라 ±1~3cm)",
     stock: "1점 한정",
     recommendedFor: "1984년 도쿄 안티패션의 원본을 하나쯤 갖고 싶은 사람",
-    categories: "#필드자켓 #히스테릭글래머 #일본 #스트릿 #아카이브",
+    category: "top",
+    tags: "#필드자켓 #히스테릭글래머 #일본 #스트릿 #아카이브",
   },
 ];
 

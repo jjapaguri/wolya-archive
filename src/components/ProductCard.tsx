@@ -81,7 +81,7 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="mt-3 font-sans text-[10px] tracking-[0.05em] text-accent">
-        {product.categories}
+        {product.tags}
       </div>
     </Link>
   );

@@ -51,16 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **상품 카테고리를 top / bottom / accessory / shoes 로 나눈다**
-  지금 `src/data/products.ts` 의 `categories` 는 `"#스트릿 #카고 #보온성"` 같은 **해시태그 문자열**이라
-  분류가 아니라 장식이다. 카테고리로 거를 수가 없다.
-  - `Product` 에 `category: "top" | "bottom" | "accessory" | "shoes"` 필드를 추가한다
-  - `/shop` 과 `/m/shop` 에 카테고리 필터를 붙인다 (탭이든 칩이든)
-  - 기존 해시태그는 `tags` 로 이름을 바꿔 그대로 둔다 — 검색·분위기 표현용으로 쓸모가 있다
-  **DB 쪽은 이미 준비돼 있다.** `categories` 테이블에 `parent_id` 자기참조가 있고
-  `products.category_id` 가 걸려 있다(`db/migrations/001_products.up.sql`).
-  앱-DB 연결이 되면 이 4개를 seed 로 넣으면 되고, 그 전까지는 프론트 타입만 맞춰둔다.
-
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
@@ -91,6 +81,26 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-20 (2)
+
+- [x] `auto` **상품 카테고리를 top / bottom / accessory / shoes 로 나눴다 — `/shop` `/m/shop` 필터 추가**
+  `src/data/products.ts` 의 `Product` 에 `category: "top" | "bottom" | "accessory" | "shoes"` 를 추가하고,
+  기존 해시태그 문자열 필드 `categories` 는 `tags` 로 이름을 바꿔 그대로 뒀다(검색·분위기 표현용).
+  `CATEGORIES`/`CATEGORY_LABELS`(한글 라벨: 상의/하의/액세서리/신발) 를 같이 export 했다.
+  기존 3개 상품에 분류를 매겼다 — 데님 트러커 자켓·필드자켓은 `top`, 퍼 백은 `accessory`
+  (지금 재고에 `bottom`/`shoes` 가 없어 그 두 탭은 빈 목록 안내문이 뜬다, 정상 동작).
+  필터 UI는 `src/components/ShopGrid.tsx`(데스크톱) / `src/components/mobile/MobileShopGrid.tsx`(모바일)
+  클라이언트 컴포넌트로 새로 만들어 `/shop` `/m/shop` 페이지가 기존처럼 `products` 배열을 그대로 넘기고,
+  그리드 안에서 탭 상태로 필터링한다. `ProductCard`/`MobileProductCard`, 상세 페이지(`/product/[slug]`,
+  `/m/product/[slug]`) 4곳의 `product.categories` 참조는 `product.tags` 로 바꿨다.
+  DB 쪽은 이미 준비돼 있다(`categories` 테이블 + `products.category_id`, `db/migrations/001_products.up.sql`) —
+  앱-DB 연결 시 이 4개 값을 seed 로 넣으면 된다.
+  `npm run lint && npm run build` 통과(기존 `DesktopViewLink.tsx` 무관 warning 1개만 남음), 31개 라우트 전부 생성 확인.
+  `npm run start` 로컬 프로덕션 서버에서 `/shop` `/m/shop` 둘 다 200, HTML에 4개 탭 라벨(상의/하의/액세서리/신발)과
+  전체 탭이 모두 출력되는 것을 curl 로 확인했다. 상세 페이지 2곳(`/product/...`, `/m/product/...`)도 200 이고
+  `product.tags` 값(`#데님자켓` 등)이 정상 출력되는 것을 확인했다.
+  탭 클릭 시 실제 필터링 동작(클라이언트 상태 변화)은 실제 브라우저로 보지 않았다 — 정적 HTML·빌드 검증까지만 했다.
 
 ### 2026-08-20
 

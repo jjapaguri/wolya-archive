@@ -116,7 +116,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
             </div>
 
             <div className="mt-6 font-sans text-[11px] tracking-[0.05em] text-accent">
-              {product.categories}
+              {product.tags}
             </div>
           </div>
         </div>
