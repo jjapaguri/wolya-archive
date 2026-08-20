@@ -75,8 +75,13 @@ export default function MobileFooter() {
         >
           <span>[IG]</span> 인스타그램 @iwannabebratpitt
         </a>
-        <a href="#" className="flex items-center gap-2 active:opacity-50">
-          <span>[KT]</span> 카카오톡 채널 [채널명/링크]
+        <a
+          href="http://pf.kakao.com/_bvxlSX"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 active:opacity-50"
+        >
+          <span>[KT]</span> 카카오톡 채널 아카이브_월야
         </a>
       </div>
 

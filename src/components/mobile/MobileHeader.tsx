@@ -104,7 +104,12 @@ export default function MobileHeader() {
           >
             INSTAGRAM
           </a>
-          <a href="#" className="hover:text-fg">
+          <a
+            href="http://pf.kakao.com/_bvxlSX"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-fg"
+          >
             KAKAOTALK
           </a>
         </div>
