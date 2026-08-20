@@ -67,8 +67,13 @@ export default function MobileFooter() {
       <div className="mb-8 h-px w-full bg-fg/10" />
 
       <div className="mb-8 flex flex-col gap-4 font-kr text-[11px] text-fg/70">
-        <a href="#" className="flex items-center gap-2 active:opacity-50">
-          <span>[IG]</span> 인스타그램 @[계정명]
+        <a
+          href="https://instagram.com/iwannabebratpitt"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 active:opacity-50"
+        >
+          <span>[IG]</span> 인스타그램 @iwannabebratpitt
         </a>
         <a href="#" className="flex items-center gap-2 active:opacity-50">
           <span>[KT]</span> 카카오톡 채널 [채널명/링크]

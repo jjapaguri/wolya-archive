@@ -96,7 +96,12 @@ export default function MobileHeader() {
         </nav>
 
         <div className="absolute bottom-10 flex gap-6 text-xs text-fg/50">
-          <a href="#" className="hover:text-fg">
+          <a
+            href="https://instagram.com/iwannabebratpitt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-fg"
+          >
             INSTAGRAM
           </a>
           <a href="#" className="hover:text-fg">
