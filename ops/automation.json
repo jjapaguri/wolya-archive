@@ -28,7 +28,7 @@
 
   "guards": {
     "deploy_window_kst": "00:00-23:59",
-    "max_deploys_per_day": 10,
+    "max_deploys_per_day": 24,
     "rollback_on_healthcheck_fail": true,
     "notify_email": "chun.percy@gmail.com"
   }

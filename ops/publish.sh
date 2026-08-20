@@ -55,7 +55,10 @@ out = {
         "deployed_sha": sh("git -C $HOME/app rev-parse --short HEAD"),
         "deployed_at": sh("git -C $HOME/app log -1 --format=%cI"),
         "deployed_subject": sh("git -C $HOME/app log -1 --format=%s"),
-        "backup_latest": sh("ls -1t $HOME/backups 2>/dev/null | head -1"),
+        # backups/ 안에는 backup.log 도 같이 산다. 그 로그는 실행할 때마다 갱신돼서
+        # 단순히 최신 파일을 집으면 항상 로그가 잡힌다 — 실제 백업 상태를 못 본다.
+        "backup_latest": sh("ls -1t $HOME/backups/wolya-*.dump 2>/dev/null | head -1 | xargs -r basename"),
+        "backup_count": sh("ls -1 $HOME/backups/wolya-*.dump 2>/dev/null | wc -l"),
     },
 }
 
