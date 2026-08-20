@@ -33,8 +33,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 레포 파일 수정 | ○ | 데스크톱 앱 폴더 연결 시 문서만 |
 | 인스타·리서치·문서·예약 작업·브라우저 | △ | ○ |
 
-- Cowork에 코드 작업이 들어오면: 급하지 않으면 `docs/BACKLOG.md` 에 항목으로 넣는다(새벽
-  개발 루프가 처리). 급하면 조사·설계·변경안까지 만들어 Claude Code로 넘긴다.
+**제3의 환경 — claude.ai/code 클라우드 세션**: 레포를 소스로 열면 빌드·push(작업 브랜치)·PR 가능.
+서버 SSH·DB는 여전히 불가.
+
+- Cowork에 코드 작업이 들어오면: 급하지 않으면 `docs/BACKLOG.md` 항목으로(새벽 루프가 처리).
+  급하면 claude.ai/code 클라우드 세션(레포를 소스로 선택해 시작)으로 넘긴다 — 그 세션은
+  작업 브랜치 push·PR이 가능하다. `git push` 403은 능력 부재가 아니라 세션에 레포가
+  소스로 등록되지 않았다는 뜻이다.
+- 어떤 세션도 노트북 작업 트리를 통합 지점으로 쓰지 않는다. 산출물은 항상 origin의
+  브랜치+PR로 보낸다 (CI가 검증, automerge가 병합). 노트북에 패치를 두고 가는 방식 금지.
 - GitHub 웹 커밋(브라우저)은 **문서·ops 설정에 한해 허용** — main의 CI가 검증하고
   `auto_deploy` 는 초록불만 배포하므로 깨진 커밋이 서비스에 닿지 않는다.
   앱 코드는 로컬에서 lint·build 를 돌릴 수 있는 Claude Code 가 기본이다.
