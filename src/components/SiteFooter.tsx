@@ -111,9 +111,14 @@ export default function SiteFooter() {
           >
             <InstagramIcon /> 인스타그램 @iwannabebratpitt
           </a>
-          <span className="flex items-center gap-2">
-            <KakaoIcon /> 카카오톡 채널 [채널명/링크]
-          </span>
+          <a
+            href="http://pf.kakao.com/_bvxlSX"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 transition-colors hover:text-accent"
+          >
+            <KakaoIcon /> 카카오톡 채널 아카이브_월야
+          </a>
         </div>
 
         <div className="mx-auto h-px max-w-[1200px] bg-border" />
