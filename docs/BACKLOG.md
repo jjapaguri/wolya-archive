@@ -54,6 +54,10 @@
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
   > 2026-08-21 dev-loop: 이 항목은 본문에 이미 "지금 만들면 버려질 코드" 라고 적혀 있어 건너뛰었다.
   > 아래 P2 두 항목도 각각 금지 경로(`ops/`·`.github/workflows/`)와 범위 초과로 자동화 대상이 아니다 — 이번 실행은 PR 없이 종료.
+  > 2026-08-22 dev-loop: 전제 재확인, 변동 없음. `package.json` dependencies 는 여전히
+  > `next`/`react`/`react-dom` 뿐이라 "앱↔DB 연결층" 항목은 1단계(`npm install pg`)부터
+  > 이번 실행 규칙의 "새 라이브러리를 설치하지 마라" 에 막혀 `review` 등급이어도 시도 자체가 불가능하다.
+  > 열린 `auto/` PR 없음. 이번 실행도 PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
