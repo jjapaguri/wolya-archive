@@ -29,6 +29,11 @@ export type ProductRow = {
   category: string | null;
   hashtags: string | null;
   images: string[] | null;
+  availability: string | null;
+  source_url: string | null;
+  note: string | null;
+  kind: string | null;
+  short_measure: string | null;
 };
 
 /**
@@ -61,6 +66,11 @@ const BASE_SELECT = `
     p.recommended_for,
     c.slug                AS category,
     p.hashtags,
+    p.availability,
+    p.source_url,
+    p.note,
+    p.kind,
+    p.short_measure,
     COALESCE(img.urls, ARRAY[]::text[]) AS images
   FROM products p
   LEFT JOIN brands     b ON b.id = p.brand_id
@@ -114,6 +124,10 @@ function toKind(category: ProductCategory): ProductKind | null {
  * 기존 `src/data/products.ts` 의 Product 와 **똑같은 모양**을 돌려주는 것이 이 함수의 전부다.
  * 그래야 A1 에서 화면이 import 한 줄만 바꾸면 된다.
  * NULL 은 빈 문자열로 낮춘다 — 화면이 옵셔널 처리를 하지 않기 때문이다.
+ * 단 sourceUrl / note 는 타입상 옵셔널이므로 빈 값이면 키를 넣지 않는다.
+ *
+ * ⚠️ Product.status(available/preorder = 매입 상태)는 DB 의 products.availability 에서 온다.
+ *    DB 의 products.status 는 노출 상태(draft/published/...)로 이름만 같고 뜻이 다르다. 섞지 말 것.
  */
 export function mapRow(row: ProductRow): Product {
   const images = row.images ?? [];
@@ -142,5 +156,13 @@ export function mapRow(row: ProductRow): Product {
     // (카드가 한 줄로 잘라 그리므로 비는 것보다 낫다). 컬럼이 생기면 여기만 바꾼다.
     shortMeasure: row.measurements ?? "",
     tags: row.hashtags ?? "",
+    status: row.availability === "preorder" ? "preorder" : "available",
+    // kind 는 "입는 위치". 가방·신발은 null 이고 코디 슬라이드에서 빠진다.
+    kind: row.kind === "top" || row.kind === "bottom" ? row.kind : null,
+    shortMeasure: row.short_measure ?? "",
+    // sourceUrl / note 는 옵셔널이다. 값이 없으면 키 자체를 넣지 않는다 —
+    // 빈 문자열을 넣으면 화면이 "고지 있음" 으로 오해한다.
+    ...(row.source_url ? { sourceUrl: row.source_url } : {}),
+    ...(row.note ? { note: row.note } : {}),
   };
 }

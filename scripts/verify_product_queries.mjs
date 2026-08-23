@@ -39,16 +39,23 @@ const check = (label, ok, detail = "") => {
 console.log("=== 1. listProducts() vs src/data/products.ts ===");
 const fromDb = run(SQL_LIST_PRODUCTS).map(mapRow);
 
-check(`건수 ${fromDb.length}건`, fromDb.length === STATIC_PRODUCTS.length,
-      `기대 ${STATIC_PRODUCTS.length} / 실제 ${fromDb.length}`);
+// DB 에 아직 시드되지 않은 상품이 있을 수 있다(온라인 소싱분은 별도 항목).
+// 그래서 "DB 에 있는 것"만 정적 데이터와 대조하고, 아직 안 들어온 건수는 따로 보고한다.
+const bySlug = new Map(STATIC_PRODUCTS.map((p) => [p.slug, p]));
+const notSeeded = STATIC_PRODUCTS.filter((p) => !fromDb.some((d) => d.slug === p.slug));
+
+console.log(`  정적 ${STATIC_PRODUCTS.length}건 / DB ${fromDb.length}건 / 미시드 ${notSeeded.length}건`);
+check("DB 상품이 전부 정적 데이터에도 있는지",
+      fromDb.every((d) => bySlug.has(d.slug)),
+      `정적에 없는 slug: ${fromDb.filter((d) => !bySlug.has(d.slug)).map((d) => d.slug).join(",")}`);
 
 // id 는 DB 시퀀스가 정하므로 제외한다(내부 식별자, 화면 의미 없음).
 const COMPARED = Object.keys(STATIC_PRODUCTS[0]).filter((k) => k !== "id");
 
-for (let i = 0; i < STATIC_PRODUCTS.length; i++) {
-  const want = STATIC_PRODUCTS[i];
+for (let i = 0; i < fromDb.length; i++) {
   const got = fromDb[i];
-  if (!got) { check(`[${i}] ${want.slug} 존재`, false, "DB 결과 없음"); continue; }
+  const want = bySlug.get(got.slug);
+  if (!want) { check(`[${i}] ${got.slug}`, false, "정적 데이터에 없음"); continue; }
   const diffs = COMPARED.filter(
     (k) => JSON.stringify(want[k]) !== JSON.stringify(got[k])
   );
@@ -58,13 +65,14 @@ for (let i = 0; i < STATIC_PRODUCTS.length; i++) {
 
 // ── 2. 정렬이 정적 배열 순서와 같은가 (겉보기 변화 없음 조건) ──────────────
 console.log("\n=== 2. 정렬 순서 보존 ===");
-check("slug 순서 동일",
-      JSON.stringify(fromDb.map((p) => p.slug)) === JSON.stringify(STATIC_PRODUCTS.map((p) => p.slug)),
+const staticOrder = STATIC_PRODUCTS.filter((p) => fromDb.some((d) => d.slug === p.slug)).map((p) => p.slug);
+check("DB 순서가 정적 배열 순서와 같은지",
+      JSON.stringify(fromDb.map((p) => p.slug)) === JSON.stringify(staticOrder),
       `실제 ${fromDb.map((p) => p.slug).join(",")}`);
 
 // ── 3. getProductBySlug ────────────────────────────────────────────────
 console.log("\n=== 3. getProductBySlug() ===");
-for (const want of STATIC_PRODUCTS) {
+for (const want of fromDb.map((d) => bySlug.get(d.slug))) {
   const rows = run(SQL_PRODUCT_BY_SLUG, want.slug);
   const got = rows.length ? mapRow(rows[0]) : null;
   const diffs = got ? COMPARED.filter((k) => JSON.stringify(want[k]) !== JSON.stringify(got[k])) : ["(없음)"];
@@ -78,7 +86,7 @@ check("SQL 인젝션 형태 입력에도 0건", run(SQL_PRODUCT_BY_SLUG, "x' OR 
 console.log("\n=== 4. listProductsByCategory() ===");
 for (const cat of ["top", "bottom", "accessory", "shoes"]) {
   const got = run(SQL_PRODUCTS_BY_CATEGORY, cat).map(mapRow);
-  const want = STATIC_PRODUCTS.filter((p) => p.category === cat);
+  const want = STATIC_PRODUCTS.filter((p) => p.category === cat && fromDb.some((d) => d.slug === p.slug));
   check(`${cat}: ${got.length}건`,
         JSON.stringify(got.map((p) => p.slug)) === JSON.stringify(want.map((p) => p.slug)),
         `기대 ${want.map((p) => p.slug).join(",")} / 실제 ${got.map((p) => p.slug).join(",")}`);
@@ -89,6 +97,19 @@ console.log("\n=== 5. 대표 이미지 ===");
 for (const p of fromDb) {
   check(`${p.slug}: image === images[0]`, p.image === p.images[0]);
 }
+
+// ── 6. 매입 상태(availability) ─────────────────────────────────────────
+console.log("\n=== 6. 매입 상태 ===");
+for (const p of fromDb) {
+  const want = bySlug.get(p.slug);
+  check(`${p.slug}: status=${p.status}`, p.status === want.status,
+        `기대 ${want.status} / 실제 ${p.status}`);
+}
+check("status 값이 available/preorder 뿐인지",
+      fromDb.every((p) => p.status === "available" || p.status === "preorder"));
+check("값 없는 sourceUrl/note 는 키가 없어야 함",
+      fromDb.every((p) => !("sourceUrl" in p) || !!p.sourceUrl) &&
+      fromDb.every((p) => !("note" in p) || !!p.note));
 
 console.log(`\n${failures === 0 ? "전부 통과" : `${failures}건 실패`}`);
 process.exit(failures === 0 ? 0 : 1);
