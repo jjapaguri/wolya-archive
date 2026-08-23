@@ -20,6 +20,9 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
 
 export const CATEGORIES: ProductCategory[] = ["top", "bottom", "accessory", "shoes"];
 
+/** 홈 코디 교차 슬라이드의 줄 구분 — 윗줄(상의) / 아랫줄(하의·그 외) */
+export type ProductKind = "top" | "bottom";
+
 export type Product = {
   id: number;
   slug: string;
@@ -44,6 +47,17 @@ export type Product = {
   recommendedFor: string;
   /** 필터용 분류 — top/bottom/accessory/shoes 4종 고정 */
   category: ProductCategory;
+  /**
+   * 홈 코디 교차 슬라이드에서 어느 줄에 흐를지.
+   * "top" = 윗줄(상의), "bottom" = 아랫줄. 상의가 아닌 품목(하의·신발·액세서리)은
+   * 아랫줄로 보내 두 줄이 코디처럼 맞물리게 한다. 필터용 `category` 와는 축이 다르다.
+   */
+  kind: ProductKind;
+  /**
+   * 카드에 한 줄로 노출하는 짧은 실측. 숫자가 세로로 맞도록 tabular-nums 로 그린다.
+   * 상세한 실측·원단·핏은 `measurements` 등 상세 페이지 몫이다.
+   */
+  shortMeasure: string;
   /** 검색·분위기 표현용 해시태그. 분류가 아니다 */
   tags: string;
 };
@@ -71,6 +85,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "무지 티 위에 툭 걸치는 간절기 아우터를 찾는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#데님자켓 #트러커 #워시드 #이예 #간절기",
   },
   {
@@ -96,6 +112,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "옷은 단순하게 입고 가방 하나로 끝내는 사람",
     category: "accessory",
+    kind: "bottom",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#숄더백 #퍼백 #자개단추 #TWIYO #컨템포러리",
   },
   {
@@ -122,6 +140,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "1984년 도쿄 안티패션의 원본을 하나쯤 갖고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "총장 66cm · 가슴 58.5cm",
     tags: "#필드자켓 #히스테릭글래머 #일본 #스트릿 #아카이브",
   },
 ];
@@ -134,20 +154,22 @@ export function formatPrice(price: number): string {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
+/** 윗줄(상의) — 홈 코디 교차 슬라이드 */
+export const tops = products.filter((product) => product.kind === "top");
+
+/** 아랫줄(하의·그 외) — 홈 코디 교차 슬라이드 */
+export const bottoms = products.filter((product) => product.kind === "bottom");
+
 /**
- * 무한 흐르는 두 줄 마퀴용. 상품 수가 적어도 줄이 비지 않도록 채운다.
- * (상품이 8개 이상으로 늘면 아래 half 분기가 자연스럽게 두 줄을 갈라준다)
+ * 마퀴 한 묶음을 최소 개수까지 채운다.
+ *
+ * 무한 스크롤은 같은 묶음 2개를 이어 붙이고 `-50%` 까지 미는 구조라,
+ * 묶음 하나가 화면보다 좁으면 루프 도중 오른쪽에 빈칸이 보인다.
+ * `minCount` 는 화면 폭 ÷ (카드 폭 + 카드 간격) 보다 넉넉하게 잡는다.
  */
-function marquee(source: Product[]): Product[] {
+export function fillRow(source: Product[], minCount: number): Product[] {
   if (source.length === 0) return [];
   const filled = [...source];
-  while (filled.length < 4) filled.push(...source);
-  return [...filled, ...filled];
+  while (filled.length < minCount) filled.push(source[filled.length % source.length]);
+  return filled;
 }
-
-const half = products.length >= 8 ? Math.ceil(products.length / 2) : products.length;
-
-export const topRowProducts = marquee(products.slice(0, half));
-export const bottomRowProducts = marquee(
-  products.length >= 8 ? products.slice(half) : [...products].reverse(),
-);
