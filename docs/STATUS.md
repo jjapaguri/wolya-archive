@@ -14,7 +14,8 @@
 ## 한 줄 요약
 
 사이트(`/`+`/m`)와 24시간 자동화는 돌고 있다.
-**병목은 앱↔DB 연결층 부재** — 상품은 하드코딩 플레이스홀더, DB 24테이블 전부 0행.
+**병목은 앱↔DB 연결층 미완결** — 읽기 계층(A0)은 붙었지만 화면은 아직 그걸 안 쓴다.
+상품은 여전히 `src/data/products.ts` 하드코딩.
 
 ## 지금 참인 것
 
@@ -27,8 +28,12 @@
   (가방·신발처럼 상·하의가 아닌 품목은 `null` — 이 구간에서 제외).
   **온라인 소싱 29건 등록(PR #13)으로 하의 9건이 들어와 이 구간이 데스크톱·모바일 둘 다 다시 나온다**
   (상의·하의 각각 `OUTFIT_ROW_MIN_ITEMS`=2건 이상 조건 충족, 코드 수정 없음)
-- 앱: PostgreSQL 클라이언트 미설치, `src/data/products.ts` 는 플레이스홀더.
-  연결 절차는 `db/HANDOFF-앱-DB-연결.md`
+- 앱: `pg` 클라이언트는 이미 설치됨(2026-08-23 `cda2889` "A0 앱-DB 읽기 연결층" —
+  `src/lib/db.ts` 커넥션 풀 + `src/lib/product-queries.ts` SQL/매퍼 + 마이그레이션 006·007).
+  **그런데 `src/app`·`src/components` 어디서도 이 계층을 import 하지 않는다** — 실제 화면은
+  여전히 `src/data/products.ts` 하드코딩을 그대로 쓴다. 남은 절차(A1: `products.ts` 를 쿼리로
+  교체)는 `db/HANDOFF-앱-DB-연결.md`. 007 시드가 실제 운영 DB에 적용됐는지는 이 세션에서
+  DB 접속이 없어 확인 못 함(노트북에서 `psql` 로 확인 필요)
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.
   PowerShell 에서 npm 불가 → CMD 또는 Git Bash
 
