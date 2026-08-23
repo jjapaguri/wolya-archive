@@ -68,8 +68,13 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
 
           <div>
             <div className="mb-3 flex items-baseline justify-between gap-3">
-              <span className="font-sans text-[10px] tracking-[0.2em] text-accent uppercase">
+              <span className="flex items-center gap-2 font-sans text-[10px] tracking-[0.2em] text-accent uppercase">
                 {product.tag}
+                {product.status === "preorder" && (
+                  <span className="border border-accent px-2 py-0.5 text-[9px] tracking-[0.1em] text-accent">
+                    예약주문
+                  </span>
+                )}
               </span>
               <span className="font-sans text-[10px] tracking-[0.1em] text-fg/40 uppercase">
                 {product.brand} · {product.size}
@@ -80,16 +85,25 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
             </h1>
             <p className="word-keep-all mb-6 font-kr text-sm font-light text-fg/70">{product.hook}</p>
 
-            <div className="mb-8 flex flex-wrap items-baseline gap-4">
-              <span className="font-serif text-3xl text-accent">{formatPrice(product.price)}</span>
-              <a
-                href="http://pf.kakao.com/_bvxlSX"
-                target="_blank"
-                rel="noreferrer"
-                className="border border-accent px-5 py-2 font-sans text-[11px] tracking-[0.15em] text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
-              >
-                구매 문의
-              </a>
+            <div className="mb-8">
+              <div className="mb-4 flex flex-wrap items-baseline gap-4">
+                <span className="font-serif text-3xl text-accent">
+                  {formatPrice(product.price)}
+                </span>
+                <a
+                  href="http://pf.kakao.com/_bvxlSX"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="border border-accent px-5 py-2 font-sans text-[11px] tracking-[0.15em] text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
+                >
+                  구매 문의
+                </a>
+              </div>
+              {product.status === "preorder" && (
+                <p className="word-keep-all border border-accent/40 bg-accent/[0.06] px-4 py-3 font-kr text-[12px] leading-[1.6] text-accent">
+                  사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-4 border-t border-border pt-6">
@@ -118,6 +132,15 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
             <div className="mt-6 font-sans text-[11px] tracking-[0.05em] text-accent">
               {product.tags}
             </div>
+
+            {product.note && (
+              <div className="word-keep-all mt-6 border-t border-border pt-4 font-kr text-[12px] leading-[1.6] text-fg/50">
+                <strong className="mb-1 block text-[10px] font-medium tracking-[0.1em] text-fg/70 uppercase">
+                  판매자 고지
+                </strong>
+                {product.note}
+              </div>
+            )}
           </div>
         </div>
       </main>

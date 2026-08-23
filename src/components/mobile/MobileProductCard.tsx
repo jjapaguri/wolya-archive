@@ -23,7 +23,14 @@ export default function MobileProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-[9px] tracking-[0.2em] text-accent uppercase">{product.tag}</span>
+        <span className="flex items-center gap-2 text-[9px] tracking-[0.2em] text-accent uppercase">
+          {product.tag}
+          {product.status === "preorder" && (
+            <span className="border border-accent px-1.5 py-0.5 text-[8px] tracking-[0.1em] text-accent">
+              예약주문
+            </span>
+          )}
+        </span>
         <span className="text-[9px] tracking-[0.1em] text-fg/40 uppercase">{product.size}</span>
       </div>
 

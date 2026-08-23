@@ -51,20 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **온라인 소싱 29건을 상품으로 등록 — 데이터는 `docs/2026-08-22-online-sourcing-29.json`**
-  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다. 기존 3건은 건드리지 않는다.
-  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
-  - `Product` 타입에 필드 3개 추가: `sourceUrl: string` · `status: "available" | "preorder"` · `note?: string`.
-    기존 3건(id 1~3)은 `status: "available"` 로 채운다.
-  - `sourcePrice` 는 지금처럼 화면 비노출. 렌더링 결과 HTML 에 숫자가 안 나오는지 확인할 것.
-  - **`status === "preorder"` 표시를 `/` 와 `/m` 양쪽에 만든다** — 위 이중 라우트 규칙을 지킬 것.
-    카드와 상세페이지에 예약주문 배지, 상세페이지 CTA 위에 고정 문구:
-    사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
-    무재고 판매라 즉시구매처럼 보이면 전자상거래법상 표시·광고 문제가 된다. 이 문구가 그 방어선이다.
-  - `note` 가 있으면(14건) 상세페이지 하단에 판매자 고지로 노출한다. 하자 고지가 여기 들어간다.
-  - 상품이 32건이 되므로 마퀴 두 줄은 자연히 찬다. `/shop` `/m/shop` 필터도 확인(top 20 / bottom 9).
-  - `next.config.ts` 는 건드리지 않는다 — 후루츠 CDN 호스트는 이미 등록돼 있다.
-
 - [ ] `review` **원본 매물 생존 체크 — 팔린 매물을 사이트에서 자동으로 내린다**
   무재고 1점물이라 원본이 팔리면 우리 상세페이지가 유령이 된다. 각 상품 `sourceUrl` 을 하루 3회 확인해
   품절·삭제면 자동 비공개로 내린다. `sourcePrice` 변동도 로그에 남긴다 — 셀러 할인 종료로 마진이
@@ -107,6 +93,30 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-23
+
+- [x] `auto` **온라인 소싱 29건을 상품으로 등록 — `docs/2026-08-22-online-sourcing-29.json`**
+  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가했다. 기존 3건(id 1~3)은
+  손대지 않고 `status: "available"` 만 채웠다. `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 쓰는
+  템플릿 리터럴로 옮겼다. `Product` 타입에 `status: "available" | "preorder"`(필수) · `note?: string`(선택) ·
+  `sourceUrl?: string`(선택)을 추가했다 — 지시문은 `sourceUrl` 을 필수로 적었지만, 기존 3건은 수집 당시
+  원본 링크를 기록해두지 않아 실제 값이 없다. URL 을 지어내는 건 금지 규칙이라 그 3건만 `sourceUrl` 을
+  비우기 위해 옵셔널로 뒀다 — 새 29건은 전부 JSON 의 실제 `fruitsfamily.com` 링크를 그대로 채웠다.
+  `sourcePrice` 는 기존과 동일하게 화면 비노출 — 빌드된 HTML 을 grep 해 숫자가 안 나오는 것을 확인했다.
+  예약주문(`status === "preorder"`) 표시는 `/`(`ProductCard.tsx`, `/product/[slug]`)와
+  `/m`(`MobileProductCard.tsx`, `/m/product/[slug]`) 양쪽에 만들었다 — 카드 태그 옆 배지, 상세페이지
+  CTA 위 고정 문구("사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.").
+  `note` 가 있는 14건은 상세페이지 하단에 "판매자 고지" 로 노출(`available` 상품엔 `note` 가 없어 노출 안 됨).
+  `next.config.ts` 는 건드리지 않았다(후루츠 CDN 호스트 기존 등록분 그대로 사용).
+  `npm run lint && npm run build` 통과 — 32개 상품 전부 `/product/[slug]` `/m/product/[slug]` 정적 생성 확인
+  (빌드 로그에 "+29 more paths"). `npm run start` 로컬 프로덕션 서버에서 확인한 것:
+  예약주문 상품 상세(desktop/mobile) curl 200 + 배지·고정 문구 텍스트 출력, `available` 상품 페이지엔
+  배지·문구가 안 나오는 것(grep count 0), 가격이 `190,000원` 형식으로 나오고 `sourcePrice` 숫자(165000)는
+  HTML 어디에도 없는 것, note 텍스트("가죽 패치에 사용감...")가 상세 하단에 뜨는 것, `/shop` `/m/shop` 양쪽
+  모두 32개 상품 링크와 4개 카테고리 탭(상의/하의/액세서리/신발)이 나오는 것, 홈 마퀴에 32개
+  `ARCHIVE 0xx` 태그가 전부 등장하는 것. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — 정적 HTML·curl
+  검증까지만 했다.
 
 ### 2026-08-20 (3)
 
