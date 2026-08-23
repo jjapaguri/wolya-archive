@@ -94,6 +94,38 @@ _(현재 없음)_
 
 ## 완료
 
+### 2026-08-23 (2)
+
+- [x] `auto` **PR #13 을 현재 main 에 맞춰 되살렸다 — `kind`/`shortMeasure`/`status` 누락 수정**
+  `auto/online-sourcing-29-products` 를 새로 만들지 않고 그대로 체크아웃해 `origin/main` 을 병합했다.
+  main 은 그 사이 PR #12(코디 교차 슬라이드, `Product.kind`/`shortMeasure` 필수화)와
+  A0 앱-DB 연결층(PR #14, `src/lib/product-queries.ts` 매퍼)이 들어와 있었다.
+  `src/data/products.ts` 는 git 이 텍스트 충돌 없이 자동 병합했지만, **의미상으로는 깨져 있었다** —
+  main 이 추가한 `kind`/`shortMeasure` 필드가 이 브랜치의 29건(id 4~32)에는 채워지지 않은 채였다
+  (기존 3건 id 1~3 에만 채워짐). `docs/INCIDENTS.md` 2026-08-23 항목이 예고한 것과 같은
+  "각자 초록불, 병합하면 타입 깨짐" 패턴이 실제로 재현됐다. `docs/2026-08-22-online-sourcing-29.json`
+  에 이미 29건 전부의 `kind`/`shortMeasure` 값이 들어 있어(같은 이름의 다른 dev-loop 실행이 채워둠)
+  그대로 옮겼다(bottom 9건, top 20건, null 0건) — 지어내지 않았다.
+  `src/lib/product-queries.ts` 의 `mapRow` 에도 `status` 필드가 없어 타입체크가 깨지고 있었다
+  (#14 가 고친 `kind`/`shortMeasure` 와 같은 종류의 누락, 이번엔 `status`). DB 에 예약주문 개념 컬럼이
+  아직 없어 시드 3건 전부 매입 완료 재고라는 전제로 `status: "available"` 고정값을 채웠다.
+  `docs/BACKLOG.md` 충돌은 main 쪽의 "PR #13 을 되살린다"(이 작업 자체) 와 "온라인 소싱 29건 등록"
+  (이미 이 브랜치에서 완료 처리됨, main 은 아직 모름) 두 항목을 제거하는 방향으로 풀었다 — 병합되고 나면
+  main 도 이 브랜치의 완료 기록을 그대로 물려받는다.
+  하의 9건이 새로 들어오면서 `docs/STATUS.md` 의 "하의 0건이라 코디 교차 슬라이드가 숨어 있다" 전제가
+  깨져 같은 PR 에서 갱신했다 — `OUTFIT_ROW_MIN_ITEMS`(2건) 조건이 충족돼 데스크톱·모바일 둘 다
+  이 구간이 다시 나온다.
+  `npm run lint && npm run build` 통과 — 89개 라우트 생성, `/product/[slug]` `/m/product/[slug]`
+  32개 전부 정적 생성 확인. `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/` `/m` 홈 HTML 에
+  `outfit-row-top`/`outfit-row-bottom`/"#아이템 소개" 가 등장하는 것(코디 구간 복귀), `/shop` 에
+  "하의" 탭이 실제 항목과 함께 나오는 것, 예약주문 상세 페이지(desktop `/product/carhartt-...`,
+  mobile `/m/product/carhartt-...`) 에 배지·고정 문구가 그대로 유지되는 것, `sourcePrice`(165000)
+  가 HTML 어디에도 없는 것. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
+  `db/migrations/`(006·007)·`package.json`(A0 연결층 의존성) 이 이 브랜치에 새로 나타나지만
+  `git diff origin/main` 로 대조하면 두 경로 모두 main 과 완전히 동일하다 — main 을 병합해
+  들어온 내용일 뿐 이 PR 이 건드린 변경이 아니다. 그래서 금지 경로 규칙에 해당하지 않는다고 보고
+  `auto` 등급을 유지했다.
+
 ### 2026-08-23
 
 - [x] `auto` **온라인 소싱 29건을 상품으로 등록 — `docs/2026-08-22-online-sourcing-29.json`**
