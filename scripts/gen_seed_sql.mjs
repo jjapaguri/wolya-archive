@@ -7,6 +7,7 @@
  * 실행: node --experimental-strip-types scripts/gen_seed_sql.mjs > db/migrations/007_seed_initial_products.up.sql
  */
 import { products, CATEGORY_LABELS, CATEGORIES } from "../src/data/products.ts";
+import { productSourcing } from "../src/data/product-sourcing.ts";
 
 /** SQL 문자열 리터럴. 작은따옴표를 두 번으로 이스케이프한다. */
 const q = (v) => (v === null || v === undefined ? "NULL" : `'${String(v).replace(/'/g, "''")}'`);
@@ -92,7 +93,7 @@ for (const x of products) {
   (SELECT id FROM categories WHERE slug = ${q(x.category)}),
   ${q(x.name)},
   ${n(x.price)},
-  ${n(x.sourcePrice)},
+  ${n(productSourcing[x.slug]?.sourcePrice)},
   ${q(grade)},
   ${q(x.condition)},
   'published',
