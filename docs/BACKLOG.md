@@ -51,6 +51,30 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
+- [ ] `auto` **PR #13 CI 실패 수정 — `src/lib/product-queries.ts` 에 `status` 누락**
+  `auto/online-sourcing-29-products` 브랜치를 체크아웃해 **그 브랜치 위에서 고치고 같은 브랜치에 푸시**한다.
+  새 브랜치를 파지 마라 — main 에는 아직 29건 상품 데이터가 없어서 재현되지 않는다.
+  증상: `error TS2741: Property "status" is missing ... product-queries.ts(109,3)`.
+  109행 근처에서 `Product` 를 만드는 객체 리터럴에 `status` 가 빠져 있다.
+  `status` 를 옵셔널로 바꾸지 마라 — 예약주문 여부는 빠뜨리면 안 되는 정보라 타입에서 강제되는 편이 맞다.
+  그 리터럴에 값을 채우는 쪽으로 고치고, `npm run lint && npm run build` 통과를 확인한 뒤 푸시한다.
+  (지난 실행에서 러너 안 build 는 통과했는데 CI 는 실패했다. 캐시 없는 clean build 로 확인할 것.)
+
+- [ ] `auto` **온라인 소싱 29건을 상품으로 등록 — 데이터는 `docs/2026-08-22-online-sourcing-29.json`**
+  > 2026-08-23: PR #13 로 구현됨(브랜치 `auto/online-sourcing-29-products`). CI 실패 수정 대기 중 — **다시 구현하지 말 것.**
+  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다. 기존 3건은 건드리지 않는다.
+  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
+  - `Product` 타입에 필드 3개 추가: `sourceUrl: string` · `status: "available" | "preorder"` · `note?: string`.
+    기존 3건(id 1~3)은 `status: "available"` 로 채운다.
+  - `sourcePrice` 는 지금처럼 화면 비노출. 렌더링 결과 HTML 에 숫자가 안 나오는지 확인할 것.
+  - **`status === "preorder"` 표시를 `/` 와 `/m` 양쪽에 만든다** — 위 이중 라우트 규칙을 지킬 것.
+    카드와 상세페이지에 예약주문 배지, 상세페이지 CTA 위에 고정 문구:
+    사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
+    무재고 판매라 즉시구매처럼 보이면 전자상거래법상 표시·광고 문제가 된다. 이 문구가 그 방어선이다.
+  - `note` 가 있으면(14건) 상세페이지 하단에 판매자 고지로 노출한다. 하자 고지가 여기 들어간다.
+  - 상품이 32건이 되므로 마퀴 두 줄은 자연히 찬다. `/shop` `/m/shop` 필터도 확인(top 20 / bottom 9).
+  - `next.config.ts` 는 건드리지 않는다 — 후루츠 CDN 호스트는 이미 등록돼 있다.
+
 - [ ] `review` **원본 매물 생존 체크 — 팔린 매물을 사이트에서 자동으로 내린다**
   무재고 1점물이라 원본이 팔리면 우리 상세페이지가 유령이 된다. 각 상품 `sourceUrl` 을 하루 3회 확인해
   품절·삭제면 자동 비공개로 내린다. `sourcePrice` 변동도 로그에 남긴다 — 셀러 할인 종료로 마진이
