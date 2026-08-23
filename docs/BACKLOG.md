@@ -51,30 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **PR #13 CI 실패 수정 — `src/lib/product-queries.ts` 에 `status` 누락**
-  `auto/online-sourcing-29-products` 브랜치를 체크아웃해 **그 브랜치 위에서 고치고 같은 브랜치에 푸시**한다.
-  새 브랜치를 파지 마라 — main 에는 아직 29건 상품 데이터가 없어서 재현되지 않는다.
-  증상: `error TS2741: Property "status" is missing ... product-queries.ts(109,3)`.
-  109행 근처에서 `Product` 를 만드는 객체 리터럴에 `status` 가 빠져 있다.
-  `status` 를 옵셔널로 바꾸지 마라 — 예약주문 여부는 빠뜨리면 안 되는 정보라 타입에서 강제되는 편이 맞다.
-  그 리터럴에 값을 채우는 쪽으로 고치고, `npm run lint && npm run build` 통과를 확인한 뒤 푸시한다.
-  (지난 실행에서 러너 안 build 는 통과했는데 CI 는 실패했다. 캐시 없는 clean build 로 확인할 것.)
-
-- [ ] `auto` **온라인 소싱 29건을 상품으로 등록 — 데이터는 `docs/2026-08-22-online-sourcing-29.json`**
-  > 2026-08-23: PR #13 로 구현됨(브랜치 `auto/online-sourcing-29-products`). CI 실패 수정 대기 중 — **다시 구현하지 말 것.**
-  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다. 기존 3건은 건드리지 않는다.
-  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
-  - `Product` 타입에 필드 3개 추가: `sourceUrl: string` · `status: "available" | "preorder"` · `note?: string`.
-    기존 3건(id 1~3)은 `status: "available"` 로 채운다.
-  - `sourcePrice` 는 지금처럼 화면 비노출. 렌더링 결과 HTML 에 숫자가 안 나오는지 확인할 것.
-  - **`status === "preorder"` 표시를 `/` 와 `/m` 양쪽에 만든다** — 위 이중 라우트 규칙을 지킬 것.
-    카드와 상세페이지에 예약주문 배지, 상세페이지 CTA 위에 고정 문구:
-    사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
-    무재고 판매라 즉시구매처럼 보이면 전자상거래법상 표시·광고 문제가 된다. 이 문구가 그 방어선이다.
-  - `note` 가 있으면(14건) 상세페이지 하단에 판매자 고지로 노출한다. 하자 고지가 여기 들어간다.
-  - 상품이 32건이 되므로 마퀴 두 줄은 자연히 찬다. `/shop` `/m/shop` 필터도 확인(top 20 / bottom 9).
-  - `next.config.ts` 는 건드리지 않는다 — 후루츠 CDN 호스트는 이미 등록돼 있다.
-
 - [ ] `review` **원본 매물 생존 체크 — 팔린 매물을 사이트에서 자동으로 내린다**
   무재고 1점물이라 원본이 팔리면 우리 상세페이지가 유령이 된다. 각 상품 `sourceUrl` 을 하루 3회 확인해
   품절·삭제면 자동 비공개로 내린다. `sourcePrice` 변동도 로그에 남긴다 — 셀러 할인 종료로 마진이
@@ -117,6 +93,43 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-23 (2)
+
+- [x] `auto` **PR #13 을 현재 main 에 맞춰 되살렸다 — `kind`/`shortMeasure`/`status` 누락 수정**
+  `auto/online-sourcing-29-products` 를 새로 만들지 않고 그대로 체크아웃해 `origin/main` 을 병합했다.
+  main 은 그 사이 PR #12(코디 교차 슬라이드, `Product.kind`/`shortMeasure` 필수화)와
+  A0 앱-DB 연결층(PR #14, `src/lib/product-queries.ts` 매퍼)이 들어와 있었다.
+  `src/data/products.ts` 는 git 이 텍스트 충돌 없이 자동 병합했지만, **의미상으로는 깨져 있었다** —
+  main 이 추가한 `kind`/`shortMeasure` 필드가 이 브랜치의 29건(id 4~32)에는 채워지지 않은 채였다
+  (기존 3건 id 1~3 에만 채워짐). `docs/INCIDENTS.md` 2026-08-23 항목이 예고한 것과 같은
+  "각자 초록불, 병합하면 타입 깨짐" 패턴이 실제로 재현됐다. `docs/2026-08-22-online-sourcing-29.json`
+  에 이미 29건 전부의 `kind`/`shortMeasure` 값이 들어 있어(같은 이름의 다른 dev-loop 실행이 채워둠)
+  그대로 옮겼다(bottom 9건, top 20건, null 0건) — 지어내지 않았다.
+  `src/lib/product-queries.ts` 의 `mapRow` 에도 `status` 필드가 없어 타입체크가 깨지고 있었다
+  (#14 가 고친 `kind`/`shortMeasure` 와 같은 종류의 누락, 이번엔 `status`). DB 에 예약주문 개념 컬럼이
+  아직 없어 시드 3건 전부 매입 완료 재고라는 전제로 `status: "available"` 고정값을 채웠었다.
+  **이 고정값은 폐기됐다** — 같은 브랜치에 마이그레이션 008·009 가 들어오면서
+  `products.availability`/`kind`/`short_measure`/`source_url`/`note` 컬럼이 생겼고,
+  `mapRow` 는 이제 그 컬럼을 읽는다. 고정값을 남겨두면 A1 에서 예약주문 29건이
+  "보유 중" 으로 표시돼 전자상거래법상 표시·광고 문제가 된다.
+  `docs/BACKLOG.md` 충돌은 main 쪽의 "PR #13 을 되살린다"(이 작업 자체) 와 "온라인 소싱 29건 등록"
+  (이미 이 브랜치에서 완료 처리됨, main 은 아직 모름) 두 항목을 제거하는 방향으로 풀었다 — 병합되고 나면
+  main 도 이 브랜치의 완료 기록을 그대로 물려받는다.
+  하의 9건이 새로 들어오면서 `docs/STATUS.md` 의 "하의 0건이라 코디 교차 슬라이드가 숨어 있다" 전제가
+  깨져 같은 PR 에서 갱신했다 — `OUTFIT_ROW_MIN_ITEMS`(2건) 조건이 충족돼 데스크톱·모바일 둘 다
+  이 구간이 다시 나온다.
+  `npm run lint && npm run build` 통과 — 89개 라우트 생성, `/product/[slug]` `/m/product/[slug]`
+  32개 전부 정적 생성 확인. `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/` `/m` 홈 HTML 에
+  `outfit-row-top`/`outfit-row-bottom`/"#아이템 소개" 가 등장하는 것(코디 구간 복귀), `/shop` 에
+  "하의" 탭이 실제 항목과 함께 나오는 것, 예약주문 상세 페이지(desktop `/product/carhartt-...`,
+  mobile `/m/product/carhartt-...`) 에 배지·고정 문구가 그대로 유지되는 것, `sourcePrice`(165000)
+  가 HTML 어디에도 없는 것. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
+  `db/migrations/`(006·007)·`package.json`(A0 연결층 의존성) 은 main 을 병합해 들어온 것으로
+  `git diff origin/main` 대조 시 main 과 동일하다 — 이 PR 이 건드린 변경이 아니다.
+  다만 **008·009 는 이 PR 이 새로 추가한 마이그레이션**이므로 `db/migrations/` 를 실제로 건드린다.
+  추가형(ADD COLUMN nullable)·멱등이고 파괴적 구문이 없지만, 등급 판단은 사람 몫이라
+  자동 병합에 기대지 않는다.
 
 ### 2026-08-23
 
