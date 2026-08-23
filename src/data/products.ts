@@ -20,8 +20,18 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
 
 export const CATEGORIES: ProductCategory[] = ["top", "bottom", "accessory", "shoes"];
 
-/** 홈 코디 교차 슬라이드의 줄 구분 — 윗줄(상의) / 아랫줄(하의·그 외) */
+/** 홈 코디 교차 슬라이드의 줄 구분 — 윗줄(상의) / 아랫줄(하의) */
 export type ProductKind = "top" | "bottom";
+
+/**
+ * 코디 교차 슬라이드를 렌더하는 최소 개수 (윗줄·아랫줄 각각).
+ *
+ * 이 구간의 의미는 "지나가는 동안 상의×하의 조합이 계속 바뀐다" 는 것이다.
+ * 한쪽이 1건뿐이면 같은 옷이 혼자 도는 그림이라 조합이 바뀌지 않고 재고가
+ * 비어 보이기만 한다. 못 미치면 구간 자체를 렌더하지 않는다 —
+ * 상의·하의가 각각 이 개수만큼 차면 코드 수정 없이 다시 나타난다.
+ */
+export const OUTFIT_ROW_MIN_ITEMS = 2;
 
 export type Product = {
   id: number;
@@ -49,10 +59,11 @@ export type Product = {
   category: ProductCategory;
   /**
    * 홈 코디 교차 슬라이드에서 어느 줄에 흐를지.
-   * "top" = 윗줄(상의), "bottom" = 아랫줄. 상의가 아닌 품목(하의·신발·액세서리)은
-   * 아랫줄로 보내 두 줄이 코디처럼 맞물리게 한다. 필터용 `category` 와는 축이 다르다.
+   * "top" = 윗줄(상의), "bottom" = 아랫줄(하의).
+   * **입는 위치가 상·하의가 아닌 품목(가방·신발 등)은 `null`** — 이 구간에서 제외한다.
+   * 필터용 `category` 와는 축이 다르다.
    */
-  kind: ProductKind;
+  kind: ProductKind | null;
   /**
    * 카드에 한 줄로 노출하는 짧은 실측. 숫자가 세로로 맞도록 tabular-nums 로 그린다.
    * 상세한 실측·원단·핏은 `measurements` 등 상세 페이지 몫이다.
@@ -112,7 +123,7 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "옷은 단순하게 입고 가방 하나로 끝내는 사람",
     category: "accessory",
-    kind: "bottom",
+    kind: null,
     shortMeasure: "실측 입고 후 공개",
     tags: "#숄더백 #퍼백 #자개단추 #TWIYO #컨템포러리",
   },
@@ -157,7 +168,7 @@ export function formatPrice(price: number): string {
 /** 윗줄(상의) — 홈 코디 교차 슬라이드 */
 export const tops = products.filter((product) => product.kind === "top");
 
-/** 아랫줄(하의·그 외) — 홈 코디 교차 슬라이드 */
+/** 아랫줄(하의) — 홈 코디 교차 슬라이드 */
 export const bottoms = products.filter((product) => product.kind === "bottom");
 
 /**

@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import { bottoms, fillRow, tops, type Product } from "@/data/products";
+import {
+  bottoms,
+  fillRow,
+  OUTFIT_ROW_MIN_ITEMS,
+  tops,
+  type Product,
+} from "@/data/products";
 
 /**
  * 홈 코디 교차 슬라이드 (데스크톱 `/`).
@@ -14,6 +20,7 @@ import { bottoms, fillRow, tops, type Product } from "@/data/products";
  * 바깥쪽(상의는 위, 하의는 아래)으로 밀어 옷끼리 맞닿게 한다.
  *
  * 카드에는 품명과 짧은 실측 한 줄만 둔다 — 원단·핏·추천 대상은 상세 페이지 몫.
+ * 상의·하의 어느 한쪽이 `OUTFIT_ROW_MIN_ITEMS` 에 못 미치면 구간을 렌더하지 않는다.
  * 목록·상세용 큰 카드(`ProductCard.tsx`)는 `/shop` 이 쓰므로 여기서 재사용하지 않는다.
  */
 
@@ -92,6 +99,12 @@ export default function ProductsSection() {
     if (event.timeStamp - pressed.t > PRESS_TIMEOUT) return;
 
     router.push(pressed.href);
+  }
+
+  // 상의·하의 어느 한쪽이라도 최소 개수를 못 채우면 구간을 통째로 숨긴다.
+  // (훅은 이 위에서 다 호출한 뒤라 조기 반환해도 호출 순서가 흔들리지 않는다)
+  if (tops.length < OUTFIT_ROW_MIN_ITEMS || bottoms.length < OUTFIT_ROW_MIN_ITEMS) {
+    return null;
   }
 
   return (

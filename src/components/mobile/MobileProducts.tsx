@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import { bottoms, fillRow, tops, type Product } from "@/data/products";
+import {
+  bottoms,
+  fillRow,
+  OUTFIT_ROW_MIN_ITEMS,
+  tops,
+  type Product,
+} from "@/data/products";
 
 /**
  * 홈 코디 교차 슬라이드 (모바일 `/m`).
@@ -12,6 +18,7 @@ import { bottoms, fillRow, tops, type Product } from "@/data/products";
  * 데스크톱(`ProductsSection.tsx`)과 같은 의도 — 윗줄=상의, 아랫줄=하의가 반대
  * 방향으로 흐르며 가운데에서 만나는 조합이 계속 바뀐다. 값만 모바일용이다.
  * 모바일은 멈추지 않는다: 탭은 정지가 아니라 그 아이템 상세로 가는 동작이다.
+ * 데스크톱과 같이 상의·하의가 `OUTFIT_ROW_MIN_ITEMS` 에 못 미치면 렌더하지 않는다.
  *
  * 모바일 컴포넌트는 데스크톱 것을 import 하지 않는다 (`docs/MAP.md`).
  */
@@ -90,6 +97,12 @@ export default function MobileProducts() {
     if (event.timeStamp - pressed.t > PRESS_TIMEOUT) return;
 
     router.push(pressed.href);
+  }
+
+  // 상의·하의 어느 한쪽이라도 최소 개수를 못 채우면 구간을 통째로 숨긴다.
+  // (훅은 이 위에서 다 호출한 뒤라 조기 반환해도 호출 순서가 흔들리지 않는다)
+  if (tops.length < OUTFIT_ROW_MIN_ITEMS || bottoms.length < OUTFIT_ROW_MIN_ITEMS) {
+    return null;
   }
 
   return (

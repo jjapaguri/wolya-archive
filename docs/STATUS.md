@@ -23,9 +23,10 @@
   `writes` 스위치만 `false`
 - CI: `.github/workflows/` 는 `ci.yml`(lint+build) + `heartbeat.yml`(cron 감시) + 자동화 루프용.
   브랜치 시절 `build.yml` 은 정리됨
-- 홈(`/`·`/m`)은 상의×하의 코디 교차 슬라이드. 줄 배정은 `products.ts` 의 `kind`.
-  **현재 재고에 하의가 0건**이라 아랫줄은 액세서리 1건이 채우고 있다 — 하의가 입고돼
-  `kind:"bottom"` 이 붙으면 코드 수정 없이 아랫줄로 들어간다
+- 홈(`/`·`/m`)은 상의×하의 코디 교차 슬라이드. 줄 배정은 `products.ts` 의 `kind`
+  (가방·신발처럼 상·하의가 아닌 품목은 `null` — 이 구간에서 제외).
+  **현재 재고에 하의가 0건이라 이 구간은 데스크톱·모바일 둘 다 숨어 있다.**
+  상의·하의가 각각 `OUTFIT_ROW_MIN_ITEMS`(2건) 이상이 되면 코드 수정 없이 다시 나온다
 - 앱: PostgreSQL 클라이언트 미설치, `src/data/products.ts` 는 플레이스홀더.
   연결 절차는 `db/HANDOFF-앱-DB-연결.md`
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.
