@@ -58,6 +58,10 @@
   > `next`/`react`/`react-dom` 뿐이라 "앱↔DB 연결층" 항목은 1단계(`npm install pg`)부터
   > 이번 실행 규칙의 "새 라이브러리를 설치하지 마라" 에 막혀 `review` 등급이어도 시도 자체가 불가능하다.
   > 열린 `auto/` PR 없음. 이번 실행도 PR 없이 종료.
+  > 2026-08-23 dev-loop: 다시 확인, 변동 없음. 열린 `auto/` PR 없음(`gh pr list` 결과 0건).
+  > `package.json` 에 여전히 PostgreSQL 클라이언트 없음 — "앱↔DB 연결층" 은 여전히 1단계부터 막힘.
+  > P1 은 비어 있고 P2 나머지 한 항목(`ops/auto_deploy.sh` 변경)은 금지 경로 그대로.
+  > 실행 가능한 항목 없어 PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
