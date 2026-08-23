@@ -1,6 +1,6 @@
 # 현재 상황 (정본)
 
-**최종 갱신: 2026-08-18 (Cowork)**
+**최종 갱신: 2026-08-23 (클라우드 세션)**
 
 **여기엔 기계가 추적하지 못하는 것만 적는다.** 다음은 여기 다시 적지 않는다:
 
@@ -23,6 +23,10 @@
   `writes` 스위치만 `false`
 - CI: `.github/workflows/` 는 `ci.yml`(lint+build) + `heartbeat.yml`(cron 감시) + 자동화 루프용.
   브랜치 시절 `build.yml` 은 정리됨
+- 홈(`/`·`/m`)은 상의×하의 코디 교차 슬라이드. 줄 배정은 `products.ts` 의 `kind`
+  (가방·신발처럼 상·하의가 아닌 품목은 `null` — 이 구간에서 제외).
+  **현재 재고에 하의가 0건이라 이 구간은 데스크톱·모바일 둘 다 숨어 있다.**
+  상의·하의가 각각 `OUTFIT_ROW_MIN_ITEMS`(2건) 이상이 되면 코드 수정 없이 다시 나온다
 - 앱: PostgreSQL 클라이언트 미설치, `src/data/products.ts` 는 플레이스홀더.
   연결 절차는 `db/HANDOFF-앱-DB-연결.md`
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.

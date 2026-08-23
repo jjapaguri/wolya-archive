@@ -68,17 +68,42 @@ body {
   }
 }
 
-.scroll-row-top {
+/* ── 홈 코디 교차 슬라이드 ──────────────────────────────────
+   윗줄(상의)과 아랫줄(하의)이 반대 방향으로 흐른다. 아랫줄은 윗줄의 1.18배
+   느리게 — 속도가 같으면 가운데에서 만나는 조합 패턴이 그대로 반복된다.
+   구조: 같은 묶음 2개를 이어 붙이고 -50% 까지 민다(= 한 묶음만큼 이동). */
+
+/* 데스크톱 `/` — 34s */
+.outfit-row-top {
+  animation: scrollRight 34s linear infinite;
+}
+
+.outfit-row-bottom {
+  animation: scrollLeft 40.12s linear infinite;
+}
+
+/* 모바일 `/m` — 40s. 탭은 정지가 아니라 상세 이동이라 멈춤 규칙이 없다 */
+.outfit-row-top-m {
   animation: scrollRight 40s linear infinite;
 }
 
-.scroll-row-bottom {
-  animation: scrollLeft 45s linear infinite;
+.outfit-row-bottom-m {
+  animation: scrollLeft 47.2s linear infinite;
+}
+
+/* 정지는 데스크톱 hover 에서만. 터치 기기의 잔류 hover 는 hover: hover 로 거른다 */
+@media (hover: hover) {
+  .outfit-marquee:hover .outfit-row-top,
+  .outfit-marquee:hover .outfit-row-bottom {
+    animation-play-state: paused;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-row-top,
-  .scroll-row-bottom {
+  .outfit-row-top,
+  .outfit-row-bottom,
+  .outfit-row-top-m,
+  .outfit-row-bottom-m {
     animation: none;
   }
 }
