@@ -107,9 +107,14 @@ for (const p of fromDb) {
 }
 check("status 값이 available/preorder 뿐인지",
       fromDb.every((p) => p.status === "available" || p.status === "preorder"));
-check("값 없는 sourceUrl/note 는 키가 없어야 함",
-      fromDb.every((p) => !("sourceUrl" in p) || !!p.sourceUrl) &&
+check("값 없는 note 는 키가 없어야 함",
       fromDb.every((p) => !("note" in p) || !!p.note));
+
+// #16 회귀 방지 — 매입가·원매물 링크는 Product 에 실려선 안 된다.
+// 실리면 "use client" 컴포넌트로 넘어가 RSC 페이로드에 직렬화되고 HTML 소스로 샌다.
+check("sourcePrice / sourceUrl 이 조회 결과에 없어야 함 (#16)",
+      fromDb.every((p) => !("sourcePrice" in p) && !("sourceUrl" in p)),
+      "조회 계층이 매입가·원매물 링크를 내보내고 있다");
 
 console.log(`\n${failures === 0 ? "전부 통과" : `${failures}건 실패`}`);
 process.exit(failures === 0 ? 0 : 1);

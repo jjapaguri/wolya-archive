@@ -94,6 +94,37 @@ _(현재 없음)_
 
 ## 완료
 
+### 2026-08-23 (3)
+
+- [x] `auto` **원가와 원매물 링크가 `/shop` `/m/shop` 페이지 소스에 그대로 노출됐다 — 막았다**
+  사람이 이번 실행에 직접 지정한 항목. 원인은 지시문에 적힌 그대로였다 — `ShopGrid.tsx`/
+  `MobileShopGrid.tsx` 가 `"use client"` 컴포넌트인데 `/shop` `/m/shop` 의 서버 컴포넌트가
+  `products` 배열 **전체**를 그 컴포넌트에 prop 으로 넘기고 있었다. Next 는 서버→클라이언트
+  경계를 넘는 prop 을 RSC 페이로드로 전부 직렬화해 초기 HTML 에 심는다 — 화면에 그리지 않는
+  필드까지 값째로 나간다는 뜻이다.
+  권장된 방향 그대로 했다: `sourcePrice`·`sourceUrl` 두 필드를 `Product` 타입(`src/data/products.ts`)
+  에서 완전히 떼어내 새 서버 전용 모듈 `src/data/product-sourcing.ts` 로 옮겼다 — slug 를 키로 하는
+  `Record<string, { sourcePrice: number; sourceUrl?: string }>` 맵이다. 32건 전부 기존 `products.ts`
+  에 박혀 있던 실제 값을 스크립트로 그대로 추출해 옮겼다(지어낸 값 없음). `Product` 타입에 이 두
+  필드가 아예 없으므로 어떤 클라이언트 컴포넌트에 prop 으로 넘기든 구조적으로 다시 샐 수 없다.
+  파일 상단 주석에 "이 파일은 서버 전용, use client 에서 import 금지" 를 명시했다(`docs/MAP.md` 에도
+  한 줄 추가).
+  연쇄 수정: `scripts/gen_seed_sql.mjs`(DB 시드 SQL 생성기)는 `x.sourcePrice` 를 직접 읽던 걸
+  `productSourcing[x.slug]?.sourcePrice` 로 바꿨다. `src/lib/product-queries.ts` 의 `mapRow` 와
+  `src/lib/products.ts` 헤더 주석도 `Product` 에 `sourcePrice` 가 없다는 전제에 맞춰 정리했다
+  (이 두 파일은 A0 DB 연결층 코드로 아직 실제 페이지에서 안 쓰이지만 `npm run build` 의 타입체크
+  대상이라 손대지 않으면 빌드가 깨진다).
+  `npm run lint && npm run build` 통과 — 89개 라우트, 32개 상품 `/product/[slug]` `/m/product/[slug]`
+  전부 정적 생성 확인. `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/shop`·`/m/shop` HTML
+  전체에서 `sourcePrice`·`fruitsfamily.com/product`·개별 매입가 숫자(149100 등)·원매물 slug
+  (`6dpt5` 등) 문자열이 **0건**(grep 카운트 0). 예약주문 상세 페이지(desktop/mobile
+  `carhartt-duck-active-jacket-usa-l`)의 "예약주문" 배지·"사입 확인 후 확정됩니다..." 고지 문구,
+  판매자 고지가 있는 상품(`carhartt-active-jacket-j130-m`)의 "판매자 고지" 문구는 desktop/mobile
+  둘 다 그대로 나오는 것을 확인했다. 홈(`/`, `/m`)에도 원가·원매물 링크 문자열이 없는 것을 확인했다
+  (홈의 코디 교차 슬라이드는 이번 원인과 다른 경로 — prop 이 아니라 클라이언트 컴포넌트가 데이터를
+  직접 import 하는 방식이라 애초에 RSC 페이로드로는 안 새지만, 같은 타입을 쓰므로 겸사겸사 확인).
+  실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
+
 ### 2026-08-23 (2)
 
 - [x] `auto` **PR #13 을 현재 main 에 맞춰 되살렸다 — `kind`/`shortMeasure`/`status` 누락 수정**

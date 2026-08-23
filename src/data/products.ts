@@ -7,6 +7,13 @@
  *
  * DB 연결층이 생기면 이 파일의 `products` export 만 실제 조회로 바꾼다.
  * export 이름을 유지하면 화면 코드는 수정할 필요가 없다.
+ *
+ * 매입가(`sourcePrice`)와 원매물 링크(`sourceUrl`)는 여기 없다 — `Product` 는
+ * `/shop` `/m/shop` 필터 컴포넌트("use client")에 통째로 props 로 넘어가 RSC
+ * 페이로드에 직렬화되므로, `Product` 에 두는 필드는 전부 브라우저에 노출된다고
+ * 봐야 한다. 그래서 두 값은 slug 로 찾는 서버 전용 맵인
+ * `src/data/product-sourcing.ts` 로 분리했다. 클라이언트 컴포넌트에서 그 파일을
+ * import 하지 말 것.
  */
 
 export type ProductCategory = "top" | "bottom" | "accessory" | "shoes";
@@ -46,8 +53,6 @@ export type Product = {
   size: string;
   /** 판매가 (원). 후르츠 게시가 + 10% 세금 */
   price: number;
-  /** 후르츠패밀리 게시가 (원) — 내부 검증용, 화면 비노출 */
-  sourcePrice: number;
   condition: string;
   hook: string;
   fabric: string;
@@ -71,8 +76,6 @@ export type Product = {
   shortMeasure: string;
   /** 검색·분위기 표현용 해시태그. 분류가 아니다 */
   tags: string;
-  /** 원본 매물 링크 — 생존 체크용. 기존 3건(id 1~3)은 수집 당시 기록이 없어 비워 둔다 */
-  sourceUrl?: string;
   /** available: 이미 매입해 보유 중. preorder: 사입 확인 전 예약주문 */
   status: "available" | "preorder";
   /** 판매자 고지(하자·할인가 변동 등). 있으면 상세페이지 하단에 노출 */
@@ -92,7 +95,6 @@ export const products: Product[] = [
     brand: "yiyae (이예)",
     size: "L",
     price: 55000,
-    sourcePrice: 50000,
     condition: "중고 · 착용 수 회. 눈에 띄는 하자 없음",
     hook: "위아래 물빠짐이 갈리는 트러커. 새 옷인데 10년 입은 얼굴을 하고 있다.",
     fabric:
@@ -120,7 +122,6 @@ export const products: Product[] = [
     brand: "The World Is Your Oyster",
     size: "OS (원사이즈)",
     price: 275000,
-    sourcePrice: 250000,
     condition: "중고 · 공식 홈페이지 구매. 자개 단추 1개 탈락 (그 외 양호)",
     hook: "브랜드 시그니처인 자개 단추를 퍼 위에 흩뿌린 숄더백. 검정 위 진주광이 유일한 색이다.",
     fabric:
@@ -149,7 +150,6 @@ export const products: Product[] = [
     brand: "Hysteric Glamour",
     size: "S (실측 오버핏)",
     price: 275000,
-    sourcePrice: 250000,
     condition: "중고 · 2026년 2월 하라주쿠 매장 구매, 4회 착용",
     hook: "라벨은 FOR YANKEE GIRL. 여성 라인이지만 가슴 단면 58.5cm — 남자가 오버핏으로 입는다.",
     fabric:
@@ -174,7 +174,6 @@ export const products: Product[] = [
     brand: "Carhartt",
     size: "L (실착 XL~2XL)",
     price: 190000,
-    sourcePrice: 165000,
     condition: "중고 · 기본적인 착용감 외 상태 양호",
     hook: "태그는 L인데 가슴 단면이 68.5cm다. 요즘 찾는 그 오버핏이 원래 사이즈다.",
     fabric: "코튼 덕 캔버스 — 워크웨어 원단. 혼용률 태그는 입고 후 확인",
@@ -186,7 +185,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 55 · 가슴 68.5 · 총장 73",
     tags: "#칼하트 #덕캔버스 #워크자켓 #USA #오버핏",
-    sourceUrl: "https://fruitsfamily.com/product/6dfwa",
     status: "preorder",
   },
   {
@@ -199,7 +197,6 @@ export const products: Product[] = [
     brand: "Carhartt",
     size: "S",
     price: 146000,
-    sourcePrice: 127000,
     condition: "중고 · 상태 좋음",
     hook: "액티브 자켓의 안감이 타탄체크로 들어간 버전. 지퍼를 열었을 때가 본편이다.",
     fabric: "코튼 덕 캔버스 겉감 + 타탄체크 안감. 혼용률 태그는 입고 후 확인",
@@ -211,7 +208,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "가슴 50 · 총장 63",
     tags: "#칼하트 #타탄체크 #J024 #액티브자켓 #빈티지",
-    sourceUrl: "https://fruitsfamily.com/product/5z1sl",
     status: "preorder",
   },
   {
@@ -224,7 +220,6 @@ export const products: Product[] = [
     brand: "Carhartt",
     size: "M",
     price: 220000,
-    sourcePrice: 200000,
     condition: "중고 · 가죽 패치 외 상태 양호",
     hook: "칼하트 M은 원래 잘 안 나온다. 빈티지 워크웨어에서 작은 사이즈가 귀한 이유는 다들 크게 입고 크게 남겨서다.",
     fabric: "코튼 덕 캔버스. 혼용률 태그는 입고 후 확인",
@@ -236,7 +231,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#칼하트 #J130 #액티브자켓 #빈티지 #M사이즈",
-    sourceUrl: "https://fruitsfamily.com/product/6c4i0",
     status: "preorder",
     note: "가죽 패치에 사용감 있음. 판매자 할인가 적용 중이라 원가 변동 가능",
   },
@@ -250,7 +244,6 @@ export const products: Product[] = [
     brand: "Patagonia",
     size: "M",
     price: 173000,
-    sourcePrice: 150000,
     condition: "중고 · 사용감 있으나 전체적으로 깔끔",
     hook: "신칠라 값은 보풀이 정한다. 겨드랑이·옆구리를 먼저 보게 되는 옷인데, 이건 그쪽이 살아 있다.",
     fabric: "폴리에스터 플리스 — 신칠라 원단. 콜롬비아 생산, 체스트 포켓",
@@ -262,7 +255,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #신칠라 #플리스 #네이비 #간절기",
-    sourceUrl: "https://fruitsfamily.com/product/6dny6",
     status: "preorder",
   },
   {
@@ -275,7 +267,6 @@ export const products: Product[] = [
     brand: "Patagonia",
     size: "XL",
     price: 138000,
-    sourcePrice: 120000,
     condition: "중고 · 상태 양호",
     hook: "신칠라보다 얇고 가볍다. 두꺼운 플리스가 부담스러운 초가을에 먼저 손이 가는 쪽.",
     fabric: "폴리에스터 마이크로 플리스 — 신칠라보다 얇은 경량 라인",
@@ -287,7 +278,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 52 · 가슴 63 · 총장 71",
     tags: "#파타고니아 #마이크로디니 #플리스 #후드집업 #경량",
-    sourceUrl: "https://fruitsfamily.com/product/6dn7h",
     status: "preorder",
     note: "판매자가 색상을 블루/청록으로 애매하게 표기 — 상세컷 확인 후 확정",
   },
@@ -301,7 +291,6 @@ export const products: Product[] = [
     brand: "Patagonia",
     size: "XXL",
     price: 220000,
-    sourcePrice: 200000,
     condition: "중고 · 매우 좋음. 보관만 했던 제품",
     hook: "\"보관만 했다\"는 말이 실제로 맞는 개체. 이번에 모은 신칠라 중 상태 기술이 가장 강하다.",
     fabric: "폴리에스터 플리스 — 신칠라 원단",
@@ -313,7 +302,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 59 · 가슴 69 · 총장 75",
     tags: "#파타고니아 #신칠라 #플리스 #오버핏 #A급",
-    sourceUrl: "https://fruitsfamily.com/product/6d5f7",
     status: "preorder",
   },
   {
@@ -326,7 +314,6 @@ export const products: Product[] = [
     brand: "Patagonia",
     size: "L",
     price: 220000,
-    sourcePrice: 200000,
     condition: "중고 · 소매·밑단에 자연스러운 사용감, 그 외 매우 양호",
     hook: "단종된 리버시블 라인. 레트로X 다음 가격대였던 자리이고, 지금은 그 자리가 비어 있다.",
     fabric: "폴리에스터 플리스 — 양면 착용. 다크월넛 컬러",
@@ -338,7 +325,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #리버시블 #플리스 #단종 #아카이브",
-    sourceUrl: "https://fruitsfamily.com/product/6dht5",
     status: "preorder",
     note: "판매자가 워런티 서비스 가능하다고 기재",
   },
@@ -352,7 +338,6 @@ export const products: Product[] = [
     brand: "Schott",
     size: "M (체감 XL)",
     price: 182000,
-    sourcePrice: 158000,
     condition: "중고 · 안감 라이닝 찢어짐 있음 (간단한 손바느질로 수선 가능)",
     hook: "MA-1 안감이 오렌지인 건 멋이 아니라 구조신호용이었다. 90년대 오리지널이라 그 규격이 그대로 남아 있다.",
     fabric: "나일론 — 리버시블 오렌지 안감. 혼용률 태그는 입고 후 확인",
@@ -364,7 +349,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 51 · 가슴 67 · 총장 64",
     tags: "#쇼트 #MA1 #플라이트자켓 #90s #밀리터리",
-    sourceUrl: "https://fruitsfamily.com/product/6cnt2",
     status: "preorder",
     note: "하자 고지 — 안감 라이닝 찢어짐. 수선 가능하나 현 상태 그대로 발송",
   },
@@ -378,7 +362,6 @@ export const products: Product[] = [
     brand: "Schott",
     size: "M",
     price: 267000,
-    sourcePrice: 243000,
     condition: "중고 · 90년대 미국 생산 오리지널 빈티지",
     hook: "퍼펙토는 쇼트가 1928년에 만든 원형이고, 618은 그 계보의 이름이다. 90년대 미국 생산분.",
     fabric: "카우하이드 레더. 혼용률·중량 태그는 입고 후 확인",
@@ -390,7 +373,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 48 · 가슴 51 · 총장 60",
     tags: "#쇼트 #퍼펙토 #618 #라이더자켓 #90s",
-    sourceUrl: "https://fruitsfamily.com/product/5ul0z",
     status: "preorder",
     note: "판매자 할인가 적용 중 — 할인 종료 시 원가 인상 가능",
   },
@@ -404,7 +386,6 @@ export const products: Product[] = [
     brand: "Avirex",
     size: "M",
     price: 184000,
-    sourcePrice: 160000,
     condition: "중고 · 빈티지 워싱",
     hook: "M-65는 포켓 네 개와 견장, 카라에 접힌 후드까지가 규격이다. 디자인이 아니라 사양이라서 질리지 않는다.",
     fabric: "코튼·나일론 혼방 추정 — 혼용률 태그는 입고 후 확인",
@@ -416,7 +397,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 45 · 가슴 54 · 총장 68",
     tags: "#아비렉스 #M65 #필드자켓 #밀리터리 #빈티지",
-    sourceUrl: "https://fruitsfamily.com/product/6dh11",
     status: "preorder",
   },
   {
@@ -429,7 +409,6 @@ export const products: Product[] = [
     brand: "Avirex",
     size: "S",
     price: 144000,
-    sourcePrice: 125000,
     condition: "중고 · 빈티지 특성상 사용감 있음",
     hook: "체스트의 레더 로고 패치가 아비렉스의 서명이다. 카키는 오렌지 안감과 가장 무난하게 붙는 색.",
     fabric: "나일론 — 체스트 아비렉스 레더 로고 패치",
@@ -441,7 +420,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 44 · 가슴 57 · 총장 64",
     tags: "#아비렉스 #MA1 #카키 #플라이트자켓 #빈티지",
-    sourceUrl: "https://fruitsfamily.com/product/4sgch",
     status: "preorder",
     note: "판매자 할인가 적용 중 — 할인 종료 시 원가 인상 가능",
   },
@@ -455,7 +433,6 @@ export const products: Product[] = [
     brand: "Polo Ralph Lauren",
     size: "M (100)",
     price: 115000,
-    sourcePrice: 100000,
     condition: "중고 · 상태 깨끗",
     hook: "폴로 니트는 라벨 한 장에 값이 갈린다. Chaps도 Denim & Supply도 아닌 본라인 23FW.",
     fabric: "코튼 케이블 니트 — 혼용률 태그는 입고 후 확인",
@@ -467,7 +444,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 47 · 가슴 53 · 총장 68",
     tags: "#폴로 #랄프로렌 #케이블니트 #네이비 #본라인",
-    sourceUrl: "https://fruitsfamily.com/product/6dpp8",
     status: "preorder",
     note: "본라인 판정은 판매글 텍스트 근거 — 매입 전 라벨 사진 확인 필요",
   },
@@ -481,7 +457,6 @@ export const products: Product[] = [
     brand: "Polo Ralph Lauren",
     size: "S (여성)",
     price: 90000,
-    sourcePrice: 75000,
     condition: "중고 · 상태 좋고 깨끗",
     hook: "짜임과 단추 디테일이 값을 하는 가디건. 연핑크는 폴로에서 자주 안 나오는 색이다.",
     fabric: "코튼 케이블 니트 — 혼용률 태그는 입고 후 확인",
@@ -493,7 +468,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 37 · 가슴 44 · 총장 50",
     tags: "#폴로 #랄프로렌 #가디건 #케이블니트 #연핑크",
-    sourceUrl: "https://fruitsfamily.com/product/6dppe",
     status: "preorder",
     note: "본라인 판정은 판매글 텍스트 근거 — 매입 전 라벨 사진 확인 필요",
   },
@@ -507,7 +481,6 @@ export const products: Product[] = [
     brand: "Polo Ralph Lauren",
     size: "L",
     price: 78000,
-    sourcePrice: 65000,
     condition: "중고 · 세탁 및 스팀살균소독 완료. 빈티지 특성상 미세한 올풀림·얼룩 가능",
     hook: "화이트 포니가 네이비 위에 올라간 기본형. 실측이 네 군데 다 적혀 있는 흔치 않은 매물이다.",
     fabric: "코튼 케이블 니트",
@@ -519,7 +492,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 40.3 · 가슴 46.1 · 총장 62",
     tags: "#폴로 #랄프로렌 #케이블니트 #네이비 #세탁완료",
-    sourceUrl: "https://fruitsfamily.com/product/5jjxg",
     status: "preorder",
     note: "본라인 판정은 판매글 텍스트 근거 — 매입 전 라벨 사진 확인 필요",
   },
@@ -533,7 +505,6 @@ export const products: Product[] = [
     brand: "Polo Ralph Lauren",
     size: "L",
     price: 103000,
-    sourcePrice: 86000,
     condition: "중고 · 눈에 띄는 오염 없음",
     hook: "숄더 에폴렛에 대형 플랩 포켓, 앵커 버튼. 셔츠라기보다 얇은 아우터로 쓰는 물건이다.",
     fabric: "코튼 — 화이트. Made in USA. 혼용률 태그는 입고 후 확인",
@@ -545,7 +516,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 49 · 가슴 61 · 총장 83",
     tags: "#폴로 #랄프로렌 #필드셔츠 #90s #MadeInUSA",
-    sourceUrl: "https://fruitsfamily.com/product/6dkpa",
     status: "preorder",
   },
   {
@@ -558,7 +528,6 @@ export const products: Product[] = [
     brand: "Neighborhood",
     size: "M",
     price: 178000,
-    sourcePrice: 155000,
     condition: "중고 빈티지 · 미발견 하자 가능성 고지",
     hook: "우라하라의 원류 중 하나. 로고를 크게 박지 않고도 알아보는 사람은 알아본다.",
     fabric: "니트 — 혼용률 태그는 입고 후 확인",
@@ -570,7 +539,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 45 · 가슴 49 · 총장 64.5",
     tags: "#네이버후드 #NEIGHBORHOOD #니트 #우라하라 #일본",
-    sourceUrl: "https://fruitsfamily.com/product/52s3w",
     status: "preorder",
   },
   {
@@ -583,7 +551,6 @@ export const products: Product[] = [
     brand: "Hysteric Glamour",
     size: "M",
     price: 115000,
-    sourcePrice: 100000,
     condition: "중고 · 깨끗. 카라 안쪽 붉은 부분은 오리지널 디자인 (겉에서 보이지 않음)",
     hook: "1984년 키타무라 노부히코가 만든 일본 안티패션의 원류. 2026년 8월 일본 현지 구제샵 매입분이다.",
     fabric: "코튼 추정 — 혼용률 태그는 입고 후 확인",
@@ -595,7 +562,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "총장 69 · 옆선 60",
     tags: "#히스테릭글래머 #셔츠자켓 #일본 #안티패션 #구제",
-    sourceUrl: "https://fruitsfamily.com/product/6ar9j",
     status: "preorder",
   },
   {
@@ -608,7 +574,6 @@ export const products: Product[] = [
     brand: "Champion",
     size: "M 태그 (실측상 L)",
     price: 107000,
-    sourcePrice: 89000,
     condition: "중고 · 전면에 경미한 오염 있음, 그 외 양호",
     hook: "리버스위브는 원단을 가로로 눕혀 짜서 세탁해도 기장이 안 줄어드는 구조다. 헤비웨이트 기모에 사이드 립 패널이 그 증거.",
     fabric: "코튼 헤비웨이트 기모 — 리버스위브 구조. 사이드 립 패널, 소매·밑단 연장 립",
@@ -620,7 +585,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 57 · 가슴 57 · 총장 68",
     tags: "#챔피온 #리버스위브 #맨투맨 #00s #헤비웨이트",
-    sourceUrl: "https://fruitsfamily.com/product/4v31h",
     status: "preorder",
     note: "하자 고지 — 전면 경미한 오염. 전후면 프린트 페이딩 있음",
   },
@@ -634,7 +598,6 @@ export const products: Product[] = [
     brand: "American Vintage",
     size: "OS (택 M)",
     price: 96000,
-    sourcePrice: 80000,
     condition: "빈티지 · 소매 끝 자연스러운 데미지 및 사용감",
     hook: "무신사가 꼽은 2026 트렌드 '포엣 코어'의 핵심 조합이 헤진 셔츠와 빛바랜 데님이다. 이건 그 절반.",
     fabric: "코튼 플란넬 — 부드럽게 에이징된 원단. Made in Bangladesh",
@@ -646,7 +609,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "품 59 · 총장 70",
     tags: "#아메리칸빈티지 #플란넬셔츠 #타탄체크 #포엣코어 #빈티지",
-    sourceUrl: "https://fruitsfamily.com/product/6c6pf",
     status: "preorder",
   },
   {
@@ -659,7 +621,6 @@ export const products: Product[] = [
     brand: "Issey Miyake",
     size: "M",
     price: 207000,
-    sourcePrice: 180000,
     condition: "중고 8/10",
     hook: "1988년 A/W 시즌 물건이다. 티셔츠 한 장이 40년 가까이 남아 있다는 사실 자체가 이 옷의 내용이다.",
     fabric: "코튼 추정 — 혼용률 태그는 입고 후 확인",
@@ -671,7 +632,6 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 51 · 가슴 52 · 총장 72",
     tags: "#이세이미야케 #IsseyMiyake #1988 #아카이브 #반팔티",
-    sourceUrl: "https://fruitsfamily.com/product/6dpdg",
     status: "preorder",
   },
   {
@@ -684,7 +644,6 @@ export const products: Product[] = [
     brand: "Levi's",
     size: "32x32",
     price: 112000,
-    sourcePrice: 93000,
     condition: "중고 빈티지 · 정품",
     hook: "501에서 Made in USA와 그 이후는 다른 옷으로 친다. 원단이 다르고 물빠짐이 다르다.",
     fabric: "코튼 데님 — 미국 생산분",
@@ -696,7 +655,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 40 · 허벅지 30 · 총장 105",
     tags: "#리바이스 #501 #빈티지데님 #MadeInUSA #90s",
-    sourceUrl: "https://fruitsfamily.com/product/6dni2",
     status: "preorder",
     note: "판매자가 교환·환불 불가 및 정품감정 문의 불가를 명시",
   },
@@ -710,7 +668,6 @@ export const products: Product[] = [
     brand: "Levi's",
     size: "32",
     price: 95000,
-    sourcePrice: 79000,
     condition: "중고 빈티지 · 빈티지 특성상 색상 편차 가능",
     hook: "505와 501 사이에 있는 라인. 501은 부담스럽고 505는 밋밋할 때 남는 답이다.",
     fabric: "코튼 데님 — 셀비지",
@@ -722,7 +679,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 43 · 허벅지 29 · 총장 107",
     tags: "#리바이스 #504 #셀비지 #빈티지데님 #레귤러핏",
-    sourceUrl: "https://fruitsfamily.com/product/6doie",
     status: "preorder",
   },
   {
@@ -735,7 +691,6 @@ export const products: Product[] = [
     brand: "Levi's",
     size: "실측 W31~32 상당",
     price: 161000,
-    sourcePrice: 140000,
     condition: "중고 · 미수선 원본. 크림빛 변색 및 오염 일부 있음",
     hook: "517은 부츠컷의 원형이고, 화이트탭에 1997년 일본 생산이면 계보가 분명하다. 수선 안 된 원본이라는 게 값의 절반이다.",
     fabric: "코튼 데님 — 1997년 일본 생산",
@@ -747,7 +702,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 40 · 허벅지 29 · 총장 114",
     tags: "#리바이스 #517 #화이트탭 #부츠컷 #90s",
-    sourceUrl: "https://fruitsfamily.com/product/5ol7y",
     status: "preorder",
     note: "하자 고지 — 크림빛 변색 및 오염 일부. 판매자가 이번 주 내 매물을 내릴 예정이라고 기재 (최우선 확보 대상)",
   },
@@ -761,7 +715,6 @@ export const products: Product[] = [
     brand: "Carhartt",
     size: "34",
     price: 161000,
-    sourcePrice: 140000,
     condition: "중고 · 워싱감 좋고 상태 양호",
     hook: "무릎이 두 겹인 건 목수 바지였기 때문이다. 그 이유가 사라진 지금도 실루엣은 그대로 남았다.",
     fabric: "코튼 덕 캔버스 — 더블니 구조",
@@ -773,7 +726,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 44.5 · 허벅지 34 · 총장 108",
     tags: "#칼하트 #카펜터 #더블니 #워크팬츠 #브라운",
-    sourceUrl: "https://fruitsfamily.com/product/6chki",
     status: "preorder",
   },
   {
@@ -786,7 +738,6 @@ export const products: Product[] = [
     brand: "Carhartt",
     size: "32x32",
     price: 108000,
-    sourcePrice: 90000,
     condition: "중고 빈티지 · 코튼 100%. 전체적인 선페이드",
     hook: "검정이 햇빛에 바래면 회갈색으로 간다. 이건 만들어서 나오는 색이 아니라 시간이 만든 색이다.",
     fabric: "코튼 100% — 전면 선페이드",
@@ -798,7 +749,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 41 · 허벅지 32",
     tags: "#칼하트 #선페이드 #블랙팬츠 #빈티지 #워크웨어",
-    sourceUrl: "https://fruitsfamily.com/product/6dkta",
     status: "preorder",
   },
   {
@@ -811,7 +761,6 @@ export const products: Product[] = [
     brand: "Stone Island",
     size: "48 (약 W32)",
     price: 293000,
-    sourcePrice: 266000,
     condition: "중고 · 빈티지 데님 특유의 페이딩, 상태 좋음",
     hook: "스톤아일랜드는 후루츠패밀리 브랜드 랭킹 1위다. 그중에서도 90년대 그린엣지는 자주 안 나온다.",
     fabric: "코튼 데님 — 그린엣지 라인",
@@ -823,7 +772,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "총장 116 · 밑단 20",
     tags: "#스톤아일랜드 #StoneIsland #그린엣지 #90s #아카이브",
-    sourceUrl: "https://fruitsfamily.com/product/6dkjx",
     status: "preorder",
   },
   {
@@ -836,7 +784,6 @@ export const products: Product[] = [
     brand: "Comme des Garcons Homme",
     size: "M (실측 W29~30)",
     price: 171000,
-    sourcePrice: 149100,
     condition: "중고 8/10",
     hook: "AD1992. 꼼데가르송은 시즌을 AD 표기로 남기는데, 그 숫자가 곧 이 옷의 나이다.",
     fabric: "코튼 치노 — 아이보리. 혼용률 태그는 입고 후 확인",
@@ -848,7 +795,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 38 · 허벅지 36.5 · 총장 101.5",
     tags: "#꼼데가르송 #CDGHomme #AD1992 #치노 #아카이브",
-    sourceUrl: "https://fruitsfamily.com/product/6dpt5",
     status: "preorder",
     note: "판매자 30% 할인가 적용 중 — 할인 종료 시 원가 인상 가능",
   },
@@ -862,7 +808,6 @@ export const products: Product[] = [
     brand: "Comme des Garcons Homme",
     size: "M",
     price: 220000,
-    sourcePrice: 200000,
     condition: "중고 · 엉덩이 부근에 아주 미세한 변색/얼룩 있음",
     hook: "나일론 100%인데 피치스킨 가공이 들어가 있다. 만졌을 때 나일론 같지 않은 게 이 바지의 요점.",
     fabric: "나일론 100% — 피치스킨 텍스처. 그레이-브라운 톤다운",
@@ -874,7 +819,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 39 · 허벅지 33 · 총장 110",
     tags: "#꼼데가르송 #CDGHomme #AD2000 #나일론팬츠 #아카이브",
-    sourceUrl: "https://fruitsfamily.com/product/6d4pj",
     status: "preorder",
     note: "하자 고지 — 엉덩이 부근 미세 변색/얼룩. 판매자가 마지막 사진에 표기",
   },
@@ -888,7 +832,6 @@ export const products: Product[] = [
     brand: "Comme des Garcons Homme",
     size: "M",
     price: 220000,
-    sourcePrice: 200000,
     condition: "중고 A-B급 · 마찰로 인한 자국이 있으나 크게 티나지 않음",
     hook: "포켓 배치로만 말하는 바지. 꼼데 옴므가 장식을 뺐을 때 무엇이 남는지 보여주는 쪽이다.",
     fabric: "혼용률 태그는 입고 후 확인",
@@ -900,7 +843,6 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 39 · 허벅지 31 · 총장 101",
     tags: "#꼼데가르송 #CDGHomme #포켓팬츠 #아카이브 #디자이너",
-    sourceUrl: "https://fruitsfamily.com/product/6axez",
     status: "preorder",
   },
 ];

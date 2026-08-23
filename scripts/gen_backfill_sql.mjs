@@ -10,6 +10,8 @@
  * 실행: node --experimental-strip-types scripts/gen_backfill_sql.mjs > db/migrations/009_backfill_availability_fields.up.sql
  */
 import { products } from "../src/data/products.ts";
+// sourceUrl 은 #16 이후 Product 가 아니라 여기 있다 (클라이언트 누출 방지).
+import { productSourcing } from "../src/data/product-sourcing.ts";
 
 const q = (v) => (v === null || v === undefined || v === "" ? "NULL" : `'${String(v).replace(/'/g, "''")}'`);
 
@@ -38,7 +40,7 @@ for (const x of products) {
   availability  = ${q(x.status)},
   kind          = ${q(x.kind)},
   short_measure = ${q(x.shortMeasure)},
-  source_url    = ${q(x.sourceUrl)},
+  source_url    = ${q(productSourcing[x.slug]?.sourceUrl)},
   note          = ${q(x.note)}
 WHERE slug = ${q(x.slug)};`);
   p();
