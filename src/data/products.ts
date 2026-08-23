@@ -20,6 +20,19 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
 
 export const CATEGORIES: ProductCategory[] = ["top", "bottom", "accessory", "shoes"];
 
+/** 홈 코디 교차 슬라이드의 줄 구분 — 윗줄(상의) / 아랫줄(하의) */
+export type ProductKind = "top" | "bottom";
+
+/**
+ * 코디 교차 슬라이드를 렌더하는 최소 개수 (윗줄·아랫줄 각각).
+ *
+ * 이 구간의 의미는 "지나가는 동안 상의×하의 조합이 계속 바뀐다" 는 것이다.
+ * 한쪽이 1건뿐이면 같은 옷이 혼자 도는 그림이라 조합이 바뀌지 않고 재고가
+ * 비어 보이기만 한다. 못 미치면 구간 자체를 렌더하지 않는다 —
+ * 상의·하의가 각각 이 개수만큼 차면 코드 수정 없이 다시 나타난다.
+ */
+export const OUTFIT_ROW_MIN_ITEMS = 2;
+
 export type Product = {
   id: number;
   slug: string;
@@ -44,6 +57,18 @@ export type Product = {
   recommendedFor: string;
   /** 필터용 분류 — top/bottom/accessory/shoes 4종 고정 */
   category: ProductCategory;
+  /**
+   * 홈 코디 교차 슬라이드에서 어느 줄에 흐를지.
+   * "top" = 윗줄(상의), "bottom" = 아랫줄(하의).
+   * **입는 위치가 상·하의가 아닌 품목(가방·신발 등)은 `null`** — 이 구간에서 제외한다.
+   * 필터용 `category` 와는 축이 다르다.
+   */
+  kind: ProductKind | null;
+  /**
+   * 카드에 한 줄로 노출하는 짧은 실측. 숫자가 세로로 맞도록 tabular-nums 로 그린다.
+   * 상세한 실측·원단·핏은 `measurements` 등 상세 페이지 몫이다.
+   */
+  shortMeasure: string;
   /** 검색·분위기 표현용 해시태그. 분류가 아니다 */
   tags: string;
   /** 원본 매물 링크 — 생존 체크용. 기존 3건(id 1~3)은 수집 당시 기록이 없어 비워 둔다 */
@@ -77,6 +102,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "무지 티 위에 툭 걸치는 간절기 아우터를 찾는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#데님자켓 #트러커 #워시드 #이예 #간절기",
     status: "available",
   },
@@ -103,6 +130,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "옷은 단순하게 입고 가방 하나로 끝내는 사람",
     category: "accessory",
+    kind: null,
+    shortMeasure: "실측 입고 후 공개",
     tags: "#숄더백 #퍼백 #자개단추 #TWIYO #컨템포러리",
     status: "available",
   },
@@ -130,6 +159,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "1984년 도쿄 안티패션의 원본을 하나쯤 갖고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "총장 66cm · 가슴 58.5cm",
     tags: "#필드자켓 #히스테릭글래머 #일본 #스트릿 #아카이브",
     status: "available",
   },
@@ -152,6 +183,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "칼하트를 오버핏으로 입고 싶은데 사이즈업이 무서웠던 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 55 · 가슴 68.5 · 총장 73",
     tags: "#칼하트 #덕캔버스 #워크자켓 #USA #오버핏",
     sourceUrl: "https://fruitsfamily.com/product/6dfwa",
     status: "preorder",
@@ -175,6 +208,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "칼하트는 갖고 싶은데 남들 다 입는 브라운은 피하고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "가슴 50 · 총장 63",
     tags: "#칼하트 #타탄체크 #J024 #액티브자켓 #빈티지",
     sourceUrl: "https://fruitsfamily.com/product/5z1sl",
     status: "preorder",
@@ -198,6 +233,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "칼하트를 오버핏이 아니라 제 사이즈로 입고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#칼하트 #J130 #액티브자켓 #빈티지 #M사이즈",
     sourceUrl: "https://fruitsfamily.com/product/6c4i0",
     status: "preorder",
@@ -222,6 +259,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "9월 말부터 바로 꺼내 입을 간절기 플리스를 찾는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #신칠라 #플리스 #네이비 #간절기",
     sourceUrl: "https://fruitsfamily.com/product/6dny6",
     status: "preorder",
@@ -245,6 +284,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "두꺼운 플리스는 답답하고 얇은 건 허전했던 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 52 · 가슴 63 · 총장 71",
     tags: "#파타고니아 #마이크로디니 #플리스 #후드집업 #경량",
     sourceUrl: "https://fruitsfamily.com/product/6dn7h",
     status: "preorder",
@@ -269,6 +310,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "신칠라를 사되 보풀 때문에 후회하고 싶지 않은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 59 · 가슴 69 · 총장 75",
     tags: "#파타고니아 #신칠라 #플리스 #오버핏 #A급",
     sourceUrl: "https://fruitsfamily.com/product/6d5f7",
     status: "preorder",
@@ -292,6 +335,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "한 벌로 두 가지 얼굴을 쓰고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #리버시블 #플리스 #단종 #아카이브",
     sourceUrl: "https://fruitsfamily.com/product/6dht5",
     status: "preorder",
@@ -316,6 +361,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "레플리카 말고 90년대 실물 MA-1을 찾던 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 51 · 가슴 67 · 총장 64",
     tags: "#쇼트 #MA1 #플라이트자켓 #90s #밀리터리",
     sourceUrl: "https://fruitsfamily.com/product/6cnt2",
     status: "preorder",
@@ -340,6 +387,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "라이더 자켓을 처음 사는데 이름값이 확실한 걸 찾는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 48 · 가슴 51 · 총장 60",
     tags: "#쇼트 #퍼펙토 #618 #라이더자켓 #90s",
     sourceUrl: "https://fruitsfamily.com/product/5ul0z",
     status: "preorder",
@@ -364,6 +413,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "가을 내내 걸칠 한 벌짜리 아우터가 필요한 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 45 · 가슴 54 · 총장 68",
     tags: "#아비렉스 #M65 #필드자켓 #밀리터리 #빈티지",
     sourceUrl: "https://fruitsfamily.com/product/6dh11",
     status: "preorder",
@@ -387,6 +438,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "MA-1을 오버핏 말고 딱 맞게 입고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 44 · 가슴 57 · 총장 64",
     tags: "#아비렉스 #MA1 #카키 #플라이트자켓 #빈티지",
     sourceUrl: "https://fruitsfamily.com/product/4sgch",
     status: "preorder",
@@ -411,6 +464,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "케이블 니트 한 벌로 가을을 나려는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 47 · 가슴 53 · 총장 68",
     tags: "#폴로 #랄프로렌 #케이블니트 #네이비 #본라인",
     sourceUrl: "https://fruitsfamily.com/product/6dpp8",
     status: "preorder",
@@ -435,6 +490,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "니트 위에 걸치는 얇은 겉옷을 찾는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 37 · 가슴 44 · 총장 50",
     tags: "#폴로 #랄프로렌 #가디건 #케이블니트 #연핑크",
     sourceUrl: "https://fruitsfamily.com/product/6dppe",
     status: "preorder",
@@ -459,6 +516,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "자켓 안에 넣어 입을 니트가 필요한 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 40.3 · 가슴 46.1 · 총장 62",
     tags: "#폴로 #랄프로렌 #케이블니트 #네이비 #세탁완료",
     sourceUrl: "https://fruitsfamily.com/product/5jjxg",
     status: "preorder",
@@ -483,6 +542,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "얇은 셔츠 아우터로 계절을 늘리고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 49 · 가슴 61 · 총장 83",
     tags: "#폴로 #랄프로렌 #필드셔츠 #90s #MadeInUSA",
     sourceUrl: "https://fruitsfamily.com/product/6dkpa",
     status: "preorder",
@@ -506,6 +567,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "일본 스트리트의 원류 브랜드를 한 벌 들이고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 45 · 가슴 49 · 총장 64.5",
     tags: "#네이버후드 #NEIGHBORHOOD #니트 #우라하라 #일본",
     sourceUrl: "https://fruitsfamily.com/product/52s3w",
     status: "preorder",
@@ -529,6 +592,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "일본 브랜드를 로고 없이 입고 싶은 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "총장 69 · 옆선 60",
     tags: "#히스테릭글래머 #셔츠자켓 #일본 #안티패션 #구제",
     sourceUrl: "https://fruitsfamily.com/product/6ar9j",
     status: "preorder",
@@ -552,6 +617,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "맨투맨 하나를 오래 입을 생각으로 사는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 57 · 가슴 57 · 총장 68",
     tags: "#챔피온 #리버스위브 #맨투맨 #00s #헤비웨이트",
     sourceUrl: "https://fruitsfamily.com/product/4v31h",
     status: "preorder",
@@ -576,6 +643,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "빈티지 특유의 낡은 질감을 그대로 원하는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "품 59 · 총장 70",
     tags: "#아메리칸빈티지 #플란넬셔츠 #타탄체크 #포엣코어 #빈티지",
     sourceUrl: "https://fruitsfamily.com/product/6c6pf",
     status: "preorder",
@@ -599,6 +668,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "아카이브를 티셔츠 한 장으로 시작하려는 사람",
     category: "top",
+    kind: "top",
+    shortMeasure: "어깨 51 · 가슴 52 · 총장 72",
     tags: "#이세이미야케 #IsseyMiyake #1988 #아카이브 #반팔티",
     sourceUrl: "https://fruitsfamily.com/product/6dpdg",
     status: "preorder",
@@ -622,6 +693,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "빈티지 데님을 처음 사면서 실패하고 싶지 않은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 40 · 허벅지 30 · 총장 105",
     tags: "#리바이스 #501 #빈티지데님 #MadeInUSA #90s",
     sourceUrl: "https://fruitsfamily.com/product/6dni2",
     status: "preorder",
@@ -646,6 +719,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "501은 너무 흔하다고 느끼는 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 43 · 허벅지 29 · 총장 107",
     tags: "#리바이스 #504 #셀비지 #빈티지데님 #레귤러핏",
     sourceUrl: "https://fruitsfamily.com/product/6doie",
     status: "preorder",
@@ -669,6 +744,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "부츠컷 데님을 원본으로 갖고 싶은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 40 · 허벅지 29 · 총장 114",
     tags: "#리바이스 #517 #화이트탭 #부츠컷 #90s",
     sourceUrl: "https://fruitsfamily.com/product/5ol7y",
     status: "preorder",
@@ -693,6 +770,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "워크웨어 팬츠를 일상복으로 쓰려는 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 44.5 · 허벅지 34 · 총장 108",
     tags: "#칼하트 #카펜터 #더블니 #워크팬츠 #브라운",
     sourceUrl: "https://fruitsfamily.com/product/6chki",
     status: "preorder",
@@ -716,6 +795,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "블랙 팬츠를 새것처럼 안 보이게 입고 싶은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 41 · 허벅지 32",
     tags: "#칼하트 #선페이드 #블랙팬츠 #빈티지 #워크웨어",
     sourceUrl: "https://fruitsfamily.com/product/6dkta",
     status: "preorder",
@@ -739,6 +820,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "스톤아일랜드를 아우터 말고 하의로 들이고 싶은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "총장 116 · 밑단 20",
     tags: "#스톤아일랜드 #StoneIsland #그린엣지 #90s #아카이브",
     sourceUrl: "https://fruitsfamily.com/product/6dkjx",
     status: "preorder",
@@ -762,6 +845,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "치노를 아카이브로 입고 싶은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 38 · 허벅지 36.5 · 총장 101.5",
     tags: "#꼼데가르송 #CDGHomme #AD1992 #치노 #아카이브",
     sourceUrl: "https://fruitsfamily.com/product/6dpt5",
     status: "preorder",
@@ -786,6 +871,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "소재로 티 내는 바지를 찾는 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 39 · 허벅지 33 · 총장 110",
     tags: "#꼼데가르송 #CDGHomme #AD2000 #나일론팬츠 #아카이브",
     sourceUrl: "https://fruitsfamily.com/product/6d4pj",
     status: "preorder",
@@ -810,6 +897,8 @@ export const products: Product[] = [
     stock: "1점 한정",
     recommendedFor: "디자이너 브랜드 팬츠를 조용하게 입고 싶은 사람",
     category: "bottom",
+    kind: "bottom",
+    shortMeasure: "허리 39 · 허벅지 31 · 총장 101",
     tags: "#꼼데가르송 #CDGHomme #포켓팬츠 #아카이브 #디자이너",
     sourceUrl: "https://fruitsfamily.com/product/6axez",
     status: "preorder",
@@ -824,20 +913,22 @@ export function formatPrice(price: number): string {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
+/** 윗줄(상의) — 홈 코디 교차 슬라이드 */
+export const tops = products.filter((product) => product.kind === "top");
+
+/** 아랫줄(하의) — 홈 코디 교차 슬라이드 */
+export const bottoms = products.filter((product) => product.kind === "bottom");
+
 /**
- * 무한 흐르는 두 줄 마퀴용. 상품 수가 적어도 줄이 비지 않도록 채운다.
- * (상품이 8개 이상으로 늘면 아래 half 분기가 자연스럽게 두 줄을 갈라준다)
+ * 마퀴 한 묶음을 최소 개수까지 채운다.
+ *
+ * 무한 스크롤은 같은 묶음 2개를 이어 붙이고 `-50%` 까지 미는 구조라,
+ * 묶음 하나가 화면보다 좁으면 루프 도중 오른쪽에 빈칸이 보인다.
+ * `minCount` 는 화면 폭 ÷ (카드 폭 + 카드 간격) 보다 넉넉하게 잡는다.
  */
-function marquee(source: Product[]): Product[] {
+export function fillRow(source: Product[], minCount: number): Product[] {
   if (source.length === 0) return [];
   const filled = [...source];
-  while (filled.length < 4) filled.push(...source);
-  return [...filled, ...filled];
+  while (filled.length < minCount) filled.push(source[filled.length % source.length]);
+  return filled;
 }
-
-const half = products.length >= 8 ? Math.ceil(products.length / 2) : products.length;
-
-export const topRowProducts = marquee(products.slice(0, half));
-export const bottomRowProducts = marquee(
-  products.length >= 8 ? products.slice(half) : [...products].reverse(),
-);
