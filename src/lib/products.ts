@@ -8,8 +8,9 @@
  *   - getProductBySlug(slug)  (동기)                   →  await getProductBySlug(slug)
  * 반환 타입이 같으므로 그 외 화면 코드는 손대지 않는다.
  *
- * ⚠️ sourcePrice(매입가)는 내부 검산용이다. Product 타입에 있어서 그대로 채우지만
- *    클라이언트 컴포넌트로 내려보내지 말 것. B단계(어드민)에서 응답 분리를 검토한다.
+ * 매입가(source_price)는 `Product` 에 없다 — `src/data/product-sourcing.ts` 참고.
+ * 이 계층이 돌려주는 `Product` 는 클라이언트 컴포넌트에 props 로 넘어갈 수 있으므로
+ * 여기서 매입가·원매물 링크를 다시 채워 넣지 말 것.
  */
 import { query } from "@/lib/db";
 import {

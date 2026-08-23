@@ -128,7 +128,6 @@ export function mapRow(row: ProductRow): Product {
     brand: row.brand ?? "",
     size: row.size ?? "",
     price: Number(row.price),
-    sourcePrice: row.source_price === null ? 0 : Number(row.source_price),
     condition: row.condition_note ?? "",
     hook: row.hook ?? "",
     fabric: row.fabric ?? "",
