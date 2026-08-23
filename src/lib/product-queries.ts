@@ -7,7 +7,7 @@
  *
  * 커넥션을 쓰는 쪽은 `src/lib/products.ts`.
  */
-import type { Product, ProductCategory, ProductKind } from "@/data/products";
+import type { Product, ProductCategory } from "@/data/products";
 
 /** SELECT 가 돌려주는 원시 행. 숫자 컬럼은 드라이버가 문자열로 줄 수 있어 넓게 받는다. */
 export type ProductRow = {
@@ -108,17 +108,6 @@ function toCategory(value: string | null): ProductCategory {
 }
 
 /**
- * 홈 코디 교차 슬라이드의 줄 배정.
- *
- * `kind` 는 원래 `category` 와 다른 축이지만 아직 전용 컬럼이 없다.
- * 상·하의만 줄에 태우고 나머지(가방·신발)는 `null` 로 빼는 규칙은 카테고리로
- * 그대로 표현되므로, 컬럼이 생기기 전까지는 카테고리에서 끌어온다.
- */
-function toKind(category: ProductCategory): ProductKind | null {
-  return category === "top" || category === "bottom" ? category : null;
-}
-
-/**
  * 행 → Product.
  *
  * 기존 `src/data/products.ts` 의 Product 와 **똑같은 모양**을 돌려주는 것이 이 함수의 전부다.
@@ -151,10 +140,6 @@ export function mapRow(row: ProductRow): Product {
     stock: row.stock_note ?? "",
     recommendedFor: row.recommended_for ?? "",
     category,
-    kind: toKind(category),
-    // 카드 한 줄용 짧은 실측 컬럼은 아직 없다 — 생기기 전까지는 긴 실측을 그대로 준다
-    // (카드가 한 줄로 잘라 그리므로 비는 것보다 낫다). 컬럼이 생기면 여기만 바꾼다.
-    shortMeasure: row.measurements ?? "",
     tags: row.hashtags ?? "",
     status: row.availability === "preorder" ? "preorder" : "available",
     // kind 는 "입는 위치". 가방·신발은 null 이고 코디 슬라이드에서 빠진다.
