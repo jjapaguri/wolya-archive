@@ -51,14 +51,16 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **PR #13 CI 실패 수정 — `src/lib/product-queries.ts` 에 `status` 누락**
-  `auto/online-sourcing-29-products` 브랜치를 체크아웃해 **그 브랜치 위에서 고치고 같은 브랜치에 푸시**한다.
-  새 브랜치를 파지 마라 — main 에는 아직 29건 상품 데이터가 없어서 재현되지 않는다.
-  증상: `error TS2741: Property "status" is missing ... product-queries.ts(109,3)`.
-  109행 근처에서 `Product` 를 만드는 객체 리터럴에 `status` 가 빠져 있다.
-  `status` 를 옵셔널로 바꾸지 마라 — 예약주문 여부는 빠뜨리면 안 되는 정보라 타입에서 강제되는 편이 맞다.
-  그 리터럴에 값을 채우는 쪽으로 고치고, `npm run lint && npm run build` 통과를 확인한 뒤 푸시한다.
-  (지난 실행에서 러너 안 build 는 통과했는데 CI 는 실패했다. 캐시 없는 clean build 로 확인할 것.)
+- [ ] `auto` **PR #13 을 현재 main 에 맞춰 되살린다 — 이 항목만 하고 끝낸다**
+  지난 실행은 60턴을 다 써서 실패했다. 곁가지로 새지 말고 아래 5단계만 한다.
+  1. `git checkout auto/online-sourcing-29-products` — **새 브랜치를 만들지 마라.**
+  2. `git merge origin/main` (main 은 PR #14 로 이미 고쳐졌다). 충돌은 main 쪽 구조를 살리고
+     29건 상품 데이터와 예약주문 표시는 유지하는 방향으로 푼다.
+  3. main 의 `Product` 는 `kind: ProductKind | null` 과 `shortMeasure: string` 을 새로 요구한다.
+     29건의 값은 **`docs/2026-08-22-online-sourcing-29.json` 에 이미 들어 있다** — 지어내지 말고 그대로 옮긴다.
+  4. `Product` 를 만드는 모든 객체 리터럴에 `status` 를 채운다 (`src/lib/product-queries.ts` 포함).
+     `status` 를 옵셔널로 바꾸지 마라 — 예약주문 여부는 빠뜨리면 안 되는 정보다.
+  5. `npm run lint && npm run build` 통과를 확인하고 **같은 브랜치에 푸시**한다. 다른 파일은 건드리지 마라.
 
 - [ ] `auto` **온라인 소싱 29건을 상품으로 등록 — 데이터는 `docs/2026-08-22-online-sourcing-29.json`**
   > 2026-08-23: PR #13 로 구현됨(브랜치 `auto/online-sourcing-29-products`). CI 실패 수정 대기 중 — **다시 구현하지 말 것.**
