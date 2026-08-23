@@ -71,7 +71,14 @@ export default async function MobileProductDetailPage({
         </div>
 
         <div className="mb-2 flex items-baseline justify-between gap-3">
-          <span className="text-[9px] tracking-[0.2em] text-accent uppercase">{product.tag}</span>
+          <span className="flex items-center gap-2 text-[9px] tracking-[0.2em] text-accent uppercase">
+            {product.tag}
+            {product.status === "preorder" && (
+              <span className="border border-accent px-1.5 py-0.5 text-[8px] tracking-[0.1em] text-accent">
+                예약주문
+              </span>
+            )}
+          </span>
           <span className="text-[9px] tracking-[0.1em] text-fg/40 uppercase">
             {product.brand} · {product.size}
           </span>
@@ -81,16 +88,23 @@ export default async function MobileProductDetailPage({
           {product.hook}
         </p>
 
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <span className="font-serif text-2xl text-accent">{formatPrice(product.price)}</span>
-          <a
-            href="http://pf.kakao.com/_bvxlSX"
-            target="_blank"
-            rel="noreferrer"
-            className="border border-accent px-4 py-2 text-[11px] tracking-[0.15em] text-accent uppercase"
-          >
-            구매 문의
-          </a>
+        <div className="mb-6">
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <span className="font-serif text-2xl text-accent">{formatPrice(product.price)}</span>
+            <a
+              href="http://pf.kakao.com/_bvxlSX"
+              target="_blank"
+              rel="noreferrer"
+              className="border border-accent px-4 py-2 text-[11px] tracking-[0.15em] text-accent uppercase"
+            >
+              구매 문의
+            </a>
+          </div>
+          {product.status === "preorder" && (
+            <p className="word-keep-all border border-accent/40 bg-accent/[0.06] px-4 py-3 font-kr text-[12px] leading-[1.5] text-accent">
+              사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-4 border-t border-fg/10 pt-5">
@@ -117,6 +131,15 @@ export default async function MobileProductDetailPage({
         </div>
 
         <div className="mt-5 text-[10px] tracking-[0.05em] text-accent">{product.tags}</div>
+
+        {product.note && (
+          <div className="word-keep-all mt-5 border-t border-fg/10 pt-4 font-kr text-[11px] leading-[1.5] text-fg/50">
+            <strong className="mb-1 block text-[10px] font-medium tracking-[0.1em] text-fg/70 uppercase">
+              판매자 고지
+            </strong>
+            {product.note}
+          </div>
+        )}
       </main>
 
       <MobileFooter />

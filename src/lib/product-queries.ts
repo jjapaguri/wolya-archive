@@ -142,5 +142,8 @@ export function mapRow(row: ProductRow): Product {
     // (카드가 한 줄로 잘라 그리므로 비는 것보다 낫다). 컬럼이 생기면 여기만 바꾼다.
     shortMeasure: row.measurements ?? "",
     tags: row.hashtags ?? "",
+    // 예약주문 여부 컬럼이 아직 없다 — DB 시드 3건은 전부 매입 완료 재고라 "available" 고정.
+    // 컬럼이 생기면 여기만 바꾼다.
+    status: "available",
   };
 }

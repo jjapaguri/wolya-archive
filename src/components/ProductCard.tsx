@@ -19,8 +19,13 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="font-sans text-[9px] tracking-[0.2em] text-accent uppercase">
+        <span className="flex items-center gap-2 font-sans text-[9px] tracking-[0.2em] text-accent uppercase">
           {product.tag}
+          {product.status === "preorder" && (
+            <span className="border border-accent px-1.5 py-0.5 text-[8px] tracking-[0.1em] text-accent">
+              예약주문
+            </span>
+          )}
         </span>
         <span className="font-sans text-[9px] tracking-[0.1em] text-fg/40 uppercase">
           {product.size}

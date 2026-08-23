@@ -51,32 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **PR #13 을 현재 main 에 맞춰 되살린다 — 이 항목만 하고 끝낸다**
-  지난 실행은 60턴을 다 써서 실패했다. 곁가지로 새지 말고 아래 5단계만 한다.
-  1. `git checkout auto/online-sourcing-29-products` — **새 브랜치를 만들지 마라.**
-  2. `git merge origin/main` (main 은 PR #14 로 이미 고쳐졌다). 충돌은 main 쪽 구조를 살리고
-     29건 상품 데이터와 예약주문 표시는 유지하는 방향으로 푼다.
-  3. main 의 `Product` 는 `kind: ProductKind | null` 과 `shortMeasure: string` 을 새로 요구한다.
-     29건의 값은 **`docs/2026-08-22-online-sourcing-29.json` 에 이미 들어 있다** — 지어내지 말고 그대로 옮긴다.
-  4. `Product` 를 만드는 모든 객체 리터럴에 `status` 를 채운다 (`src/lib/product-queries.ts` 포함).
-     `status` 를 옵셔널로 바꾸지 마라 — 예약주문 여부는 빠뜨리면 안 되는 정보다.
-  5. `npm run lint && npm run build` 통과를 확인하고 **같은 브랜치에 푸시**한다. 다른 파일은 건드리지 마라.
-
-- [ ] `auto` **온라인 소싱 29건을 상품으로 등록 — 데이터는 `docs/2026-08-22-online-sourcing-29.json`**
-  > 2026-08-23: PR #13 로 구현됨(브랜치 `auto/online-sourcing-29-products`). CI 실패 수정 대기 중 — **다시 구현하지 말 것.**
-  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다. 기존 3건은 건드리지 않는다.
-  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
-  - `Product` 타입에 필드 3개 추가: `sourceUrl: string` · `status: "available" | "preorder"` · `note?: string`.
-    기존 3건(id 1~3)은 `status: "available"` 로 채운다.
-  - `sourcePrice` 는 지금처럼 화면 비노출. 렌더링 결과 HTML 에 숫자가 안 나오는지 확인할 것.
-  - **`status === "preorder"` 표시를 `/` 와 `/m` 양쪽에 만든다** — 위 이중 라우트 규칙을 지킬 것.
-    카드와 상세페이지에 예약주문 배지, 상세페이지 CTA 위에 고정 문구:
-    사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
-    무재고 판매라 즉시구매처럼 보이면 전자상거래법상 표시·광고 문제가 된다. 이 문구가 그 방어선이다.
-  - `note` 가 있으면(14건) 상세페이지 하단에 판매자 고지로 노출한다. 하자 고지가 여기 들어간다.
-  - 상품이 32건이 되므로 마퀴 두 줄은 자연히 찬다. `/shop` `/m/shop` 필터도 확인(top 20 / bottom 9).
-  - `next.config.ts` 는 건드리지 않는다 — 후루츠 CDN 호스트는 이미 등록돼 있다.
-
 - [ ] `review` **원본 매물 생존 체크 — 팔린 매물을 사이트에서 자동으로 내린다**
   무재고 1점물이라 원본이 팔리면 우리 상세페이지가 유령이 된다. 각 상품 `sourceUrl` 을 하루 3회 확인해
   품절·삭제면 자동 비공개로 내린다. `sourcePrice` 변동도 로그에 남긴다 — 셀러 할인 종료로 마진이
@@ -119,6 +93,62 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-23 (2)
+
+- [x] `auto` **PR #13 을 현재 main 에 맞춰 되살렸다 — `kind`/`shortMeasure`/`status` 누락 수정**
+  `auto/online-sourcing-29-products` 를 새로 만들지 않고 그대로 체크아웃해 `origin/main` 을 병합했다.
+  main 은 그 사이 PR #12(코디 교차 슬라이드, `Product.kind`/`shortMeasure` 필수화)와
+  A0 앱-DB 연결층(PR #14, `src/lib/product-queries.ts` 매퍼)이 들어와 있었다.
+  `src/data/products.ts` 는 git 이 텍스트 충돌 없이 자동 병합했지만, **의미상으로는 깨져 있었다** —
+  main 이 추가한 `kind`/`shortMeasure` 필드가 이 브랜치의 29건(id 4~32)에는 채워지지 않은 채였다
+  (기존 3건 id 1~3 에만 채워짐). `docs/INCIDENTS.md` 2026-08-23 항목이 예고한 것과 같은
+  "각자 초록불, 병합하면 타입 깨짐" 패턴이 실제로 재현됐다. `docs/2026-08-22-online-sourcing-29.json`
+  에 이미 29건 전부의 `kind`/`shortMeasure` 값이 들어 있어(같은 이름의 다른 dev-loop 실행이 채워둠)
+  그대로 옮겼다(bottom 9건, top 20건, null 0건) — 지어내지 않았다.
+  `src/lib/product-queries.ts` 의 `mapRow` 에도 `status` 필드가 없어 타입체크가 깨지고 있었다
+  (#14 가 고친 `kind`/`shortMeasure` 와 같은 종류의 누락, 이번엔 `status`). DB 에 예약주문 개념 컬럼이
+  아직 없어 시드 3건 전부 매입 완료 재고라는 전제로 `status: "available"` 고정값을 채웠다.
+  `docs/BACKLOG.md` 충돌은 main 쪽의 "PR #13 을 되살린다"(이 작업 자체) 와 "온라인 소싱 29건 등록"
+  (이미 이 브랜치에서 완료 처리됨, main 은 아직 모름) 두 항목을 제거하는 방향으로 풀었다 — 병합되고 나면
+  main 도 이 브랜치의 완료 기록을 그대로 물려받는다.
+  하의 9건이 새로 들어오면서 `docs/STATUS.md` 의 "하의 0건이라 코디 교차 슬라이드가 숨어 있다" 전제가
+  깨져 같은 PR 에서 갱신했다 — `OUTFIT_ROW_MIN_ITEMS`(2건) 조건이 충족돼 데스크톱·모바일 둘 다
+  이 구간이 다시 나온다.
+  `npm run lint && npm run build` 통과 — 89개 라우트 생성, `/product/[slug]` `/m/product/[slug]`
+  32개 전부 정적 생성 확인. `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/` `/m` 홈 HTML 에
+  `outfit-row-top`/`outfit-row-bottom`/"#아이템 소개" 가 등장하는 것(코디 구간 복귀), `/shop` 에
+  "하의" 탭이 실제 항목과 함께 나오는 것, 예약주문 상세 페이지(desktop `/product/carhartt-...`,
+  mobile `/m/product/carhartt-...`) 에 배지·고정 문구가 그대로 유지되는 것, `sourcePrice`(165000)
+  가 HTML 어디에도 없는 것. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
+  `db/migrations/`(006·007)·`package.json`(A0 연결층 의존성) 이 이 브랜치에 새로 나타나지만
+  `git diff origin/main` 로 대조하면 두 경로 모두 main 과 완전히 동일하다 — main 을 병합해
+  들어온 내용일 뿐 이 PR 이 건드린 변경이 아니다. 그래서 금지 경로 규칙에 해당하지 않는다고 보고
+  `auto` 등급을 유지했다.
+
+### 2026-08-23
+
+- [x] `auto` **온라인 소싱 29건을 상품으로 등록 — `docs/2026-08-22-online-sourcing-29.json`**
+  JSON 29건(id 4~32)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가했다. 기존 3건(id 1~3)은
+  손대지 않고 `status: "available"` 만 채웠다. `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 쓰는
+  템플릿 리터럴로 옮겼다. `Product` 타입에 `status: "available" | "preorder"`(필수) · `note?: string`(선택) ·
+  `sourceUrl?: string`(선택)을 추가했다 — 지시문은 `sourceUrl` 을 필수로 적었지만, 기존 3건은 수집 당시
+  원본 링크를 기록해두지 않아 실제 값이 없다. URL 을 지어내는 건 금지 규칙이라 그 3건만 `sourceUrl` 을
+  비우기 위해 옵셔널로 뒀다 — 새 29건은 전부 JSON 의 실제 `fruitsfamily.com` 링크를 그대로 채웠다.
+  `sourcePrice` 는 기존과 동일하게 화면 비노출 — 빌드된 HTML 을 grep 해 숫자가 안 나오는 것을 확인했다.
+  예약주문(`status === "preorder"`) 표시는 `/`(`ProductCard.tsx`, `/product/[slug]`)와
+  `/m`(`MobileProductCard.tsx`, `/m/product/[slug]`) 양쪽에 만들었다 — 카드 태그 옆 배지, 상세페이지
+  CTA 위 고정 문구("사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.").
+  `note` 가 있는 14건은 상세페이지 하단에 "판매자 고지" 로 노출(`available` 상품엔 `note` 가 없어 노출 안 됨).
+  `next.config.ts` 는 건드리지 않았다(후루츠 CDN 호스트 기존 등록분 그대로 사용).
+  `npm run lint && npm run build` 통과 — 32개 상품 전부 `/product/[slug]` `/m/product/[slug]` 정적 생성 확인
+  (빌드 로그에 "+29 more paths"). `npm run start` 로컬 프로덕션 서버에서 확인한 것:
+  예약주문 상품 상세(desktop/mobile) curl 200 + 배지·고정 문구 텍스트 출력, `available` 상품 페이지엔
+  배지·문구가 안 나오는 것(grep count 0), 가격이 `190,000원` 형식으로 나오고 `sourcePrice` 숫자(165000)는
+  HTML 어디에도 없는 것, note 텍스트("가죽 패치에 사용감...")가 상세 하단에 뜨는 것, `/shop` `/m/shop` 양쪽
+  모두 32개 상품 링크와 4개 카테고리 탭(상의/하의/액세서리/신발)이 나오는 것, 홈 마퀴에 32개
+  `ARCHIVE 0xx` 태그가 전부 등장하는 것. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — 정적 HTML·curl
+  검증까지만 했다.
 
 ### 2026-08-20 (3)
 

@@ -25,8 +25,8 @@
   브랜치 시절 `build.yml` 은 정리됨
 - 홈(`/`·`/m`)은 상의×하의 코디 교차 슬라이드. 줄 배정은 `products.ts` 의 `kind`
   (가방·신발처럼 상·하의가 아닌 품목은 `null` — 이 구간에서 제외).
-  **현재 재고에 하의가 0건이라 이 구간은 데스크톱·모바일 둘 다 숨어 있다.**
-  상의·하의가 각각 `OUTFIT_ROW_MIN_ITEMS`(2건) 이상이 되면 코드 수정 없이 다시 나온다
+  **온라인 소싱 29건 등록(PR #13)으로 하의 9건이 들어와 이 구간이 데스크톱·모바일 둘 다 다시 나온다**
+  (상의·하의 각각 `OUTFIT_ROW_MIN_ITEMS`=2건 이상 조건 충족, 코드 수정 없음)
 - 앱: PostgreSQL 클라이언트 미설치, `src/data/products.ts` 는 플레이스홀더.
   연결 절차는 `db/HANDOFF-앱-DB-연결.md`
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.
