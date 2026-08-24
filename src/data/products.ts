@@ -76,8 +76,13 @@ export type Product = {
   shortMeasure: string;
   /** 검색·분위기 표현용 해시태그. 분류가 아니다 */
   tags: string;
-  /** available: 이미 매입해 보유 중. preorder: 사입 확인 전 예약주문 */
-  status: "available" | "preorder";
+  /**
+   * available: 이미 매입해 보유 중. preorder: 사입 확인 전 예약주문.
+   * sold: 원본 매물 생존 체크(`scripts/check-source-availability.mjs`)가 원본이
+   * 죽었다고 판정해 내림 — `/shop` `/m/shop` 목록·홈 코디 슬라이드에서 빠지지만
+   * 상세페이지는 살아있다(판매완료 표시로 남김, 404 아님). 되돌리기는 사람이 한다.
+   */
+  status: "available" | "preorder" | "sold";
   /** 판매자 고지(하자·할인가 변동 등). 있으면 상세페이지 하단에 노출 */
   note?: string;
 };
@@ -185,7 +190,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 55 · 가슴 68.5 · 총장 73",
     tags: "#칼하트 #덕캔버스 #워크자켓 #USA #오버핏",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 5,
@@ -255,7 +260,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #신칠라 #플리스 #네이비 #간절기",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 8,
@@ -278,7 +283,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 52 · 가슴 63 · 총장 71",
     tags: "#파타고니아 #마이크로디니 #플리스 #후드집업 #경량",
-    status: "preorder",
+    status: "sold",
     note: "판매자가 색상을 블루/청록으로 애매하게 표기 — 상세컷 확인 후 확정",
   },
   {
@@ -325,7 +330,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#파타고니아 #리버시블 #플리스 #단종 #아카이브",
-    status: "preorder",
+    status: "sold",
     note: "판매자가 워런티 서비스 가능하다고 기재",
   },
   {
@@ -609,7 +614,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "품 59 · 총장 70",
     tags: "#아메리칸빈티지 #플란넬셔츠 #타탄체크 #포엣코어 #빈티지",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 23,
@@ -655,7 +660,7 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 40 · 허벅지 30 · 총장 105",
     tags: "#리바이스 #501 #빈티지데님 #MadeInUSA #90s",
-    status: "preorder",
+    status: "sold",
     note: "판매자가 교환·환불 불가 및 정품감정 문의 불가를 명시",
   },
   {
@@ -679,7 +684,7 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 43 · 허벅지 29 · 총장 107",
     tags: "#리바이스 #504 #셀비지 #빈티지데님 #레귤러핏",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 26,
@@ -855,11 +860,14 @@ export function formatPrice(price: number): string {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
+/** 목록 노출용 — `sold` 은 `/shop` `/m/shop` 목록과 홈 코디 슬라이드에서 뺀다. 상세페이지는 별도로 살려둔다(`getProductBySlug`) */
+export const listedProducts = products.filter((product) => product.status !== "sold");
+
 /** 윗줄(상의) — 홈 코디 교차 슬라이드 */
-export const tops = products.filter((product) => product.kind === "top");
+export const tops = listedProducts.filter((product) => product.kind === "top");
 
 /** 아랫줄(하의) — 홈 코디 교차 슬라이드 */
-export const bottoms = products.filter((product) => product.kind === "bottom");
+export const bottoms = listedProducts.filter((product) => product.kind === "bottom");
 
 /**
  * 마퀴 한 묶음을 최소 개수까지 채운다.

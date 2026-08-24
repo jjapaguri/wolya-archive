@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import GrainOverlay from "@/components/GrainOverlay";
 import SiteFooter from "@/components/SiteFooter";
 import ShopGrid from "@/components/ShopGrid";
-import { products } from "@/data/products";
+import { listedProducts } from "@/data/products";
 
 export const metadata: Metadata = {
   title: "Shop | WOLYA ARCHIVE",
@@ -26,7 +26,7 @@ export default function ShopPage() {
           #전체 아이템
         </span>
 
-        <ShopGrid products={products} />
+        <ShopGrid products={listedProducts} />
       </main>
       <SiteFooter />
     </>

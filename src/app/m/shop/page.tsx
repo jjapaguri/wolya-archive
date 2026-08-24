@@ -4,7 +4,7 @@ import GrainOverlay from "@/components/GrainOverlay";
 import MobileHeader from "@/components/mobile/MobileHeader";
 import MobileFooter from "@/components/mobile/MobileFooter";
 import MobileShopGrid from "@/components/mobile/MobileShopGrid";
-import { products } from "@/data/products";
+import { listedProducts } from "@/data/products";
 
 export const metadata: Metadata = {
   title: "Shop | WOLYA ARCHIVE",
@@ -26,7 +26,7 @@ export default function MobileShopPage() {
           #전체 아이템
         </span>
 
-        <MobileShopGrid products={products} />
+        <MobileShopGrid products={listedProducts} />
       </main>
 
       <MobileFooter />

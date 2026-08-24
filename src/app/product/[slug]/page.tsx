@@ -75,6 +75,11 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
                     예약주문
                   </span>
                 )}
+                {product.status === "sold" && (
+                  <span className="border border-fg/30 px-2 py-0.5 text-[9px] tracking-[0.1em] text-fg/50">
+                    판매완료
+                  </span>
+                )}
               </span>
               <span className="font-sans text-[10px] tracking-[0.1em] text-fg/40 uppercase">
                 {product.brand} · {product.size}
@@ -90,18 +95,32 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
                 <span className="font-serif text-3xl text-accent">
                   {formatPrice(product.price)}
                 </span>
-                <a
-                  href="http://pf.kakao.com/_bvxlSX"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="border border-accent px-5 py-2 font-sans text-[11px] tracking-[0.15em] text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
-                >
-                  구매 문의
-                </a>
+                {product.status === "sold" ? (
+                  <span
+                    aria-disabled="true"
+                    className="cursor-not-allowed border border-fg/20 px-5 py-2 font-sans text-[11px] tracking-[0.15em] text-fg/40 uppercase"
+                  >
+                    판매완료
+                  </span>
+                ) : (
+                  <a
+                    href="http://pf.kakao.com/_bvxlSX"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-accent px-5 py-2 font-sans text-[11px] tracking-[0.15em] text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
+                  >
+                    구매 문의
+                  </a>
+                )}
               </div>
               {product.status === "preorder" && (
                 <p className="word-keep-all border border-accent/40 bg-accent/[0.06] px-4 py-3 font-kr text-[12px] leading-[1.6] text-accent">
                   사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
+                </p>
+              )}
+              {product.status === "sold" && (
+                <p className="word-keep-all border border-fg/20 bg-fg/[0.03] px-4 py-3 font-kr text-[12px] leading-[1.6] text-fg/50">
+                  판매완료된 상품입니다. 같은 옷은 1점만 있어 재입고되지 않습니다.
                 </p>
               )}
             </div>

@@ -1,37 +1,46 @@
 /**
- * 원본 매물(fruitsfamily.com) 생존 체크 — 읽기 전용.
+ * 원본 매물(fruitsfamily.com) 생존 체크.
  *
- * `product-sourcing.ts` 의 `sourceUrl` 을 하나씩 fetch 해서 원본이 아직 판매중인지,
- * 가격이 매입 당시(`sourcePrice`)와 달라졌는지 확인한다. **사이트에 아무것도 쓰지 않는다** —
- * 결과를 사람(또는 ops 큐)이 읽고 판단하도록 보고만 한다.
+ * `product-sourcing.ts` 의 `sourceUrl` 을 하나씩 fetch 해서 원본이 아직 판매중인지 확인한다.
+ * 기본은 `--dry-run`(사실상 아무 플래그도 안 주는 것과 같다) — 결과만 보고하고 아무것도 쓰지 않는다.
+ * `--write` 를 주면 dead 로 판정된 slug 의 `src/data/products.ts` `status` 를 `"sold"` 로 바꾼다.
  *
- * 자동으로 상품을 비공개 처리하는 것은 이 스크립트의 범위가 아니다. 지금 사이트는
- * `src/data/products.ts` 정적 데이터라 "비공개 처리" 는 곧 그 파일을 고쳐 재배포하는
- * 것이고, 그건 코드 변경이라 사람 검토가 필요하다(`ops/automation.json` 의 `writes` 도
- * 아직 `false` — 자동화가 사이트 데이터에 쓰기를 하면 안 되는 상태).
+ * 판정 신호는 실측으로 확정했다(2026-08-23, `docs/BACKLOG.md`). `GET fruitsfamily.com/product/{id}`
+ * 는 서버 렌더 HTML이라 JS 실행 없이 정규식으로 충분하다.
  *
- * fruitsfamily.com 페이지 안에 Next.js RSC 데이터로 상품 정보가 박혀 있고, 그중
- * "이 상품 자신"의 항목만 `price`/`original_price` 바로 뒤에 `status`(또는 `is_visible`) 가
- * 붙어 나온다(추천 상품들은 `status` 만 있고 `price` 가 없다) — 실제 응답을 여러 건 떠서 확인한
- * 패턴이다. 페이지마다 그 뒤에 `status` 가 오기도 하고 `is_visible` 이 오기도 해서 둘 다 본다.
- * "selling" 이 아니거나 `is_visible:false` 면 팔렸거나 내려간 것으로 보고 사람 확인이 필요하다고
- * 표시한다. 어느 쪽 패턴도 못 찾으면 억지로 판정하지 않고 그대로 "확인 필요" 로 남긴다 —
- * fruitsfamily 가 마크업을 또 바꾸면 이 휴리스틱도 깨질 수 있으니, 모르는 경우 확신하지 않는
- * 쪽이 안전하다. 그럴 때도 `httpStatus` 만으로는 최소한 "링크 자체가 죽었는지" 는 알 수 있다.
+ *   alive   — <meta property="product:availability" content="in stock">
+ *   dead    — 같은 meta 가 "out of stock" (품절)
+ *   dead    — 본문에 "숨김 처리된 상품입니다" (판매자가 숨김)
+ *   dead    — 본문에 "해당 상품이 존재하지 않습니다" (삭제됨, HTTP 200 인 soft-404)
+ *   dead    — HTTP 404 (없는 slug)
+ *   unknown — 그 외 전부 (네트워크 오류·타임아웃·5xx·meta 없음)
  *
- * 실행: node --experimental-strip-types scripts/check-source-availability.mjs [--json]
+ * `unknown` 은 절대 내리지 않는다 — 신호가 없다는 것과 팔렸다는 것은 다르다.
+ * 현재가는 같은 응답의 `<meta property="product:price:amount">` 에서 읽는다.
+ *
+ * 안전밸브: 한 회차 dead 판정이 확인 대상의 40% 를 넘으면 (--write 라도) 아무것도 쓰지 않고
+ * 비정상 종료한다. 그 정도면 매물이 아니라 후루츠 쪽 구조가 바뀌었거나 우리가 차단된 것이다.
+ *
+ * 실행: node --experimental-strip-types scripts/check-source-availability.mjs [--write] [--json]
  */
+import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { productSourcing } from "../src/data/product-sourcing.ts";
 
+const WRITE = process.argv.includes("--write");
 const AS_JSON = process.argv.includes("--json");
 const TIMEOUT_MS = 15_000;
 const DELAY_BETWEEN_REQUESTS_MS = 500;
+const DEAD_RATIO_SAFETY_VALVE = 0.4;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** 원본 상품 자신의 JSON 조각 — price/original_price 뒤에 status 또는 is_visible 이 붙는 두 형태를 본다. */
-const OWN_PRODUCT_STATUS_RE = /"price":(\d+),"original_price":(null|\d+),"status":"([a-z_]+)"/;
-const OWN_PRODUCT_VISIBLE_RE = /"price":(\d+),"original_price":(null|\d+),"is_visible":(true|false)/;
+// 실제 마크업은 <meta data-rh="true" property="..." content="..."/> 처럼 속성 순서에
+// data-rh 가 끼어 있어 태그 시작부터 앵커링하지 않는다.
+const AVAILABILITY_RE = /property="product:availability" content="(in stock|out of stock)"/;
+const PRICE_RE = /property="product:price:amount" content="(\d+)"/;
+const HIDDEN_TEXT = "숨김 처리된 상품입니다";
+const DELETED_TEXT = "해당 상품이 존재하지 않습니다";
 
 async function checkOne(slug, sourceUrl, sourcePrice) {
   const result = { slug, sourceUrl, sourcePrice };
@@ -47,51 +56,87 @@ async function checkOne(slug, sourceUrl, sourcePrice) {
   } catch (err) {
     result.httpStatus = null;
     result.error = err instanceof Error ? err.message : String(err);
-    result.verdict = "확인 실패 — 네트워크 오류";
+    result.judgement = "unknown";
+    result.verdict = "확인 실패 — 네트워크 오류/타임아웃";
     return result;
   }
 
   result.httpStatus = res.status;
 
   if (res.status === 404) {
-    result.verdict = "원본 삭제됨 (404) — 사람 확인 필요";
+    result.judgement = "dead";
+    result.verdict = "HTTP 404 — 없는 slug";
     return result;
   }
   if (!res.ok) {
-    result.verdict = `원본 응답 이상 (HTTP ${res.status}) — 사람 확인 필요`;
+    result.judgement = "unknown";
+    result.verdict = `원본 응답 이상 (HTTP ${res.status})`;
     return result;
   }
 
   const html = await res.text();
-  const statusMatch = html.match(OWN_PRODUCT_STATUS_RE);
-  const visibleMatch = !statusMatch && html.match(OWN_PRODUCT_VISIBLE_RE);
 
-  if (!statusMatch && !visibleMatch) {
-    result.verdict = "상품 정보 패턴을 못 찾음 (fruitsfamily 마크업 변경 가능성) — 사람 확인 필요";
+  if (html.includes(HIDDEN_TEXT)) {
+    result.judgement = "dead";
+    result.verdict = "판매자가 숨김 처리함";
+    return result;
+  }
+  if (html.includes(DELETED_TEXT)) {
+    result.judgement = "dead";
+    result.verdict = "삭제됨 (soft-404, HTTP 200)";
     return result;
   }
 
-  const match = statusMatch ?? visibleMatch;
-  const priceOnPage = Number(match[1]);
-  result.priceOnPage = priceOnPage;
+  const priceMatch = html.match(PRICE_RE);
+  if (priceMatch) result.priceOnPage = Number(priceMatch[1]);
 
-  const notSelling = statusMatch
-    ? statusMatch[3] !== "selling"
-    : visibleMatch[3] !== "true";
-  if (statusMatch) result.pageStatus = statusMatch[3];
-  if (visibleMatch) result.isVisible = visibleMatch[3] === "true";
-
-  const priceChanged = priceOnPage !== sourcePrice;
-
-  if (notSelling) {
-    const reason = statusMatch ? `상태 "${statusMatch[3]}" (selling 아님)` : "is_visible: false";
-    result.verdict = `원본 ${reason} — 팔렸거나 내려갔을 가능성, 사람 확인 필요`;
-  } else if (priceChanged) {
-    result.verdict = `판매중, 가격 변동 있음: 매입가 ${sourcePrice.toLocaleString()}원 → 현재 ${priceOnPage.toLocaleString()}원`;
-  } else {
-    result.verdict = "판매중, 가격 동일";
+  const availMatch = html.match(AVAILABILITY_RE);
+  if (!availMatch) {
+    result.judgement = "unknown";
+    result.verdict = "availability meta 를 못 찾음 (fruitsfamily 마크업 변경 가능성)";
+    return result;
   }
+
+  if (availMatch[1] === "out of stock") {
+    result.judgement = "dead";
+    result.verdict = "품절 (meta out of stock)";
+    return result;
+  }
+
+  result.judgement = "alive";
+  const priceChanged = result.priceOnPage != null && result.priceOnPage !== sourcePrice;
+  result.verdict = priceChanged
+    ? `판매중, 가격 변동 있음: 매입가 ${sourcePrice.toLocaleString()}원 → 현재 ${result.priceOnPage.toLocaleString()}원`
+    : "판매중, 가격 동일";
   return result;
+}
+
+/** slug 로 해당 상품 블록을 찾아 status 를 "sold" 로 바꾼다. 이미 sold 면 그대로 둔다. */
+function markSoldInSource(src, slug) {
+  const blockRe = new RegExp(
+    `(slug:\\s*"${slug}"[\\s\\S]*?status:\\s*")(available|preorder|sold)(")`,
+  );
+  const match = src.match(blockRe);
+  if (!match) {
+    throw new Error(`slug "${slug}" 의 status 필드를 products.ts 에서 못 찾음 — 구조 확인 필요`);
+  }
+  if (match[2] === "sold") return { src, changed: false };
+  return { src: src.replace(blockRe, `$1sold$3`), changed: true };
+}
+
+function writeSoldStatuses(deadSlugs) {
+  const filePath = fileURLToPath(new URL("../src/data/products.ts", import.meta.url));
+  let src = readFileSync(filePath, "utf8");
+  const changed = [];
+
+  for (const slug of deadSlugs) {
+    const result = markSoldInSource(src, slug);
+    src = result.src;
+    if (result.changed) changed.push(slug);
+  }
+
+  if (changed.length > 0) writeFileSync(filePath, src);
+  return changed;
 }
 
 async function main() {
@@ -104,20 +149,63 @@ async function main() {
   }
 
   const skipped = Object.keys(productSourcing).length - entries.length;
+  const dead = results.filter((r) => r.judgement === "dead");
+  const unknown = results.filter((r) => r.judgement === "unknown");
+  const deadRatio = results.length > 0 ? dead.length / results.length : 0;
 
-  if (AS_JSON) {
-    console.log(JSON.stringify({ checkedAt: new Date().toISOString(), skippedNoSourceUrl: skipped, results }, null, 2));
+  if (deadRatio > DEAD_RATIO_SAFETY_VALVE) {
+    console.error(
+      `안전밸브 — dead 판정 ${dead.length}/${results.length}건 (${Math.round(deadRatio * 100)}%) 이 40% 를 넘었다.`,
+    );
+    console.error(
+      "매물이 아니라 후루츠 쪽 구조가 바뀌었거나 우리가 차단됐을 가능성 — 아무것도 쓰지 않고 종료한다.",
+    );
+    process.exitCode = 1;
     return;
   }
 
-  console.log(`원본 매물 생존 체크 — ${entries.length}건 확인 (sourceUrl 없어 건너뜀: ${skipped}건)\n`);
-  const needsAttention = results.filter((r) => r.verdict.includes("사람 확인 필요") || r.verdict.includes("가격 변동"));
-  for (const r of results) {
-    console.log(`[${r.slug}] ${r.verdict}`);
+  let changedSlugs = [];
+  if (WRITE && dead.length > 0) {
+    changedSlugs = writeSoldStatuses(dead.map((r) => r.slug));
   }
-  console.log(`\n주의 필요: ${needsAttention.length}/${results.length}건`);
-  if (needsAttention.length > 0) {
-    console.log("→ 위 목록에서 재확인하고, 필요하면 src/data/products.ts 를 사람이 직접 고친다.");
+
+  if (AS_JSON) {
+    console.log(
+      JSON.stringify(
+        {
+          checkedAt: new Date().toISOString(),
+          skippedNoSourceUrl: skipped,
+          wrote: WRITE,
+          changedSlugs,
+          results,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
+  console.log(
+    `원본 매물 생존 체크 — ${entries.length}건 확인 (sourceUrl 없어 건너뜀: ${skipped}건)${WRITE ? " [--write]" : " [dry-run]"}\n`,
+  );
+  for (const r of results) {
+    console.log(`[${r.slug}] (${r.judgement}) ${r.verdict}`);
+  }
+  console.log(
+    `\ndead: ${dead.length}건 / unknown: ${unknown.length}건 / alive: ${results.length - dead.length - unknown.length}건 / 총 ${results.length}건`,
+  );
+  if (WRITE) {
+    if (changedSlugs.length > 0) {
+      console.log(`→ status 를 "sold" 로 바꾼 slug (${changedSlugs.length}건): ${changedSlugs.join(", ")}`);
+    } else if (dead.length > 0) {
+      console.log("→ dead 판정된 slug 는 이미 전부 sold 상태였다. 바꾼 것 없음.");
+    }
+  } else if (dead.length > 0) {
+    console.log('→ dry-run 이라 아무것도 쓰지 않았다. --write 로 다시 실행하면 위 dead 항목의 status 를 "sold" 로 바꾼다.');
+  }
+  if (unknown.length > 0) {
+    console.log("→ unknown 은 자동으로 내리지 않는다. 사람이 직접 확인.");
   }
 }
 
