@@ -153,6 +153,26 @@ _(현재 없음)_
 
 ## 완료
 
+### 2026-08-24 (2)
+
+- [x] `auto` **`src/data/business.ts` 빈 값을 실제 값으로 채움**
+  사람이 이번 실행에 직접 지정한 항목. PR #19 에서 만든 `businessInfo` 상수의 구조는 그대로
+  두고 값만 채웠다 — 상호 "아카이브월야", 대표자명 "전종민", 사업자등록번호 "385-35-01969",
+  사업장주소 "인천광역시 연수구 컨벤시아대로42번길 96", 연락처 "010-2814-9773".
+  통신판매업신고번호(`mailOrderLicenseNumber`)는 아직 접수 대기라 지시대로 빈 문자열 그대로
+  두었다 — 지어내거나 "준비중" 같은 문구를 넣지 않았다. `SiteFooter.tsx`·`MobileFooter.tsx`
+  자체는 건드리지 않았다(둘 다 이미 `businessInfo` 를 읽어 빈 값은 `.filter()` 로 걸러내는
+  구조였다).
+  `npm run start` 로컬 프로덕션 서버로 확인: `/`(데스크톱 UA)와 `/m`(iPhone UA, `/` 요청 시
+  307 리다이렉트 확인) 양쪽의 HTML을 curl 로 받아 5개 값 문자열이 각각 2회씩(desktop 배열
+  객체 마크업 + RSC 페이로드) 나오는 것을 grep 으로 확인했다. `통신판매업` 문자열이 남아있는
+  자리는 전부 상단 고지 안내문(disclaimer) 텍스트뿐이고, 필드 행 라벨("통신판매업 신고번호"
+  단독)로는 등장하지 않아 빈 값 필터링이 정상 동작함을 확인했다. 실제 브라우저로는 보지
+  않았다.
+  `db/migrations/`·`ops/`·`.github/workflows/`·`AGENTS.md`·`next.config.ts`·결제/주문 코드·
+  `package.json` 의존성 어느 것도 건드리지 않았다. `npm run lint && npm run build` 통과
+  (lint 는 기존에도 있던 `DesktopViewLink.tsx` 무관 warning 1개만 남음).
+
 ### 2026-08-24
 
 - [x] `auto` **사업자 정보 표기 블록 — `src/data/business.ts` 로 데스크톱·모바일 푸터 통합**
