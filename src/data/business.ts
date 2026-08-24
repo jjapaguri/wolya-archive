@@ -5,15 +5,15 @@
  */
 export const businessInfo = {
   /** 상호 */
-  name: "",
+  name: "아카이브월야",
   /** 대표자명 */
-  representative: "",
+  representative: "전종민",
   /** 사업자등록번호 */
-  registrationNumber: "",
+  registrationNumber: "385-35-01969",
   /** 사업장 소재지 */
-  address: "",
+  address: "인천광역시 연수구 컨벤시아대로42번길 96",
   /** 연락처 */
-  phone: "",
+  phone: "010-2814-9773",
   /** 통신판매업 신고번호 — 접수 대기 중이라 기본값은 빈 문자열이다 */
   mailOrderLicenseNumber: "",
 };
