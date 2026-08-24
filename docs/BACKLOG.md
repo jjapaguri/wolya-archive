@@ -61,6 +61,10 @@
     지금 할인가가 걸린 4건(`6c4i0` · `5ul0z` · `4sgch` · `6dpt5`)이 할인 종료로 원가가 오르면 여기 걸린다.
   - 안전밸브(40% 룰)에 걸리면 커밋하지 말고 **워크플로를 실패시켜라.** heartbeat 처럼 눈에 띄어야 한다.
   - 첫 단계에서 `ops/automation.json` 의 `enabled` 를 읽어 꺼져 있으면 no-op 종료 (다른 워크플로와 같은 규약).
+  > 2026-08-24 dev-loop: 구현은 끝냈다(lint·build 통과) — `git push` 가 "refusing to allow a GitHub
+  > App to create or update workflow ... without `workflows` permission" 로 거부됐다. 이 세션의
+  > GitHub App 토큰엔 `.github/workflows/` 를 건드릴 권한 자체가 없다. PR 을 못 열어 로컬 브랜치는
+  > 버렸다. 사람이 직접(또는 권한 있는 세션에서) 만들어야 한다 — 내용은 이 항목 그대로.
 
 
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
