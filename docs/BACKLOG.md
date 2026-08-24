@@ -51,41 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **원본 매물 생존 체크 (1/2) — 판정을 meta 태그로 바꾸고 `sold` 상태를 만든다**
-  `scripts/check-source-availability.mjs` 는 이미 main 에 있다(읽기 전용). 그런데 **판정을 페이지에 박힌**
-  **JSON 조각의 `is_visible` 로 하고 있어서 못 믿는다** — 앞선 실행이 스스로 그렇게 적어뒀고, 실제로 틀렸다.
-  같은 날 그 스크립트는 "나머지는 원본 그대로 판매중" 이라고 했는데,
-  **직접 확인하니 29건 중 7건이 죽어 있었다.** 등록 10시간 만이다. 이건 예외가 아니라 이 사업의 정상 상태다.
-
-  **판정 신호는 실측으로 확정했다(2026-08-23). 새로 조사하지 말고 이 표로 교체하라.**
-  `GET https://fruitsfamily.com/product/{id}` 는 서버 렌더 HTML이라 JS 실행이 필요 없다. 정규식으로 충분하다.
-
-  | 판정 | 신호 |
-  |---|---|
-  | **alive** | `<meta property="product:availability" content="in stock">` |
-  | **dead** | 같은 meta 가 `out of stock` — 품절 |
-  | **dead** | 본문에 `숨김 처리된 상품입니다` — 판매자가 숨김 |
-  | **dead** | 본문에 `해당 상품이 존재하지 않습니다` — 삭제됨. **HTTP 200 인 soft-404 라 상태코드로는 못 잡는다** |
-  | **dead** | HTTP 404 — 없는 slug |
-  | **unknown** | 그 외 전부 (네트워크 오류·타임아웃·5xx·meta 없음) |
-
-  현재가도 같은 응답의 `<meta property="product:price:amount">` 에서 그대로 읽힌다. `is_visible` 파싱은 버려라.
-
-  1. 판정 함수를 위 표대로 교체한다. `--dry-run`(기본) / `--write` 는 유지.
-  2. **`unknown` 은 절대 내리지 마라.** 신호가 없다는 것과 팔렸다는 것은 다르다. 다음 회차로 넘긴다.
-  3. **안전밸브**: 한 회차 dead 판정이 대상의 40% 를 넘으면 아무것도 쓰지 말고 비정상 종료한다.
-     그 정도면 매물이 아니라 후루츠 쪽 구조가 바뀌었거나 우리가 차단된 것이다.
-  4. `Product.status` 에 `"sold"` 를 추가한다. `sold` 는 `/shop` `/m/shop` 목록과 홈 슬라이드에서 **빠진다.**
-     상세페이지는 404 로 만들지 말고 **판매완료 표시 + 구매 CTA 비활성**으로 남긴다 — 인스타에 올린 링크가
-     죽으면 안 되고 아카이브 기록도 남아야 한다. `/` 와 `/m` 양쪽 다 고칠 것(이중 라우트 규칙).
-  5. **`sold` → 되돌리기는 자동으로 하지 마라.** 판매자가 재등록해도 사람이 판단한다.
-  6. `--write` 로 한 번 돌려 지금 죽은 것들을 반영하고, **몇 건을 무엇으로 판정했는지 PR 본문에 목록으로** 적어라.
-  7. `.github/workflows/` 와 `ops/` 는 건드리지 마라 — 다음 항목이다. `npm run lint && npm run build` 통과 확인.
-
-  > 앞선 실행이 `ops/automation.json` 의 `writes: false` 때문에 막혔다고 적었는데 **오독이다.**
-  > 그 스위치 설명은 "자동화가 **운영 DB**에 쓰기를 해도 되는지" 다. 우리는 DB 가 아니라 git 추적 파일에
-  > PR·CI 를 거쳐 커밋한다 — 이미 `true` 인 `develop` 스위치 경로다. `writes` 는 건드릴 필요 없다.
-
 - [ ] `review` **원본 매물 생존 체크 (2/2) — 하루 3회 자동 실행** (앞 항목이 병합된 뒤에 한다)
   `.github/workflows/source-watch.yml` 을 새로 만든다. 금지 경로라 자동 병합하지 않는다.
   - cron 하루 3회, KST 09/15/21 (UTC 00/06/12). dev-loop(03/11/19 KST)와 시간이 겹치지 않게 둔다.
@@ -152,6 +117,43 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-24 (3)
+
+- [x] `auto` **원본 매물 생존 체크 (1/2) — 판정을 meta 태그로 바꾸고 `sold` 상태를 만듦**
+  `scripts/check-source-availability.mjs` 의 판정 함수를 백로그에 적힌 표대로 완전히 새로 짰다 —
+  `<meta property="product:availability" content="in stock|out of stock">`, 본문의
+  `숨김 처리된 상품입니다`/`해당 상품이 존재하지 않습니다`, HTTP 404 다섯 신호로 alive/dead/unknown
+  세 갈래만 판정한다. 기존 `is_visible`/`status` JSON 조각 파싱은 완전히 버렸다.
+  **표에 적힌 정규식(`<meta property="..." content="...">`)을 그대로 쓰면 실제로는 안 걸렸다** —
+  실측해보니 실제 마크업이 `<meta data-rh="true" property="..." content="...">` 로 `data-rh` 속성이
+  중간에 끼어 있어 태그 시작(`<meta `)에 앵커링하는 정규식은 전부 놓쳤다(첫 dry-run에서 29건 중
+  27건이 unknown으로 나와 발견함). `<meta ` 앵커를 버리고 `property="..." content="..."` 부분만
+  매칭하도록 고쳐서 해결 — 이후 실행은 alive 22 / dead 7 / unknown 0 으로, 사람이 직접 확인해
+  백로그에 적어둔 "29건 중 7건이 죽어 있었다" 와 정확히 일치했다.
+  `--dry-run`(기본, 아무 플래그 없이) / `--write` 플래그를 만들었다(이전엔 `--json` 만 있었다).
+  안전밸브(dead 40% 초과 시 아무것도 안 쓰고 비정상 종료)를 추가했다 — 이번 실행은 24%(7/29)라
+  걸리지 않았다.
+  `Product.status` 에 `"sold"` 를 추가하고 `src/data/products.ts` 에 `listedProducts`
+  (status가 sold 가 아닌 것만) export 를 새로 만들어 `/shop` `/m/shop` 페이지와 홈 코디 슬라이드
+  (`tops`/`bottoms`)가 이걸 쓰도록 바꿨다 — sold 상품은 목록·슬라이드에서 빠진다.
+  상세 페이지(`/product/[slug]` `/m/product/[slug]`)는 `getProductBySlug` 가 전체 `products` 를
+  그대로 쓰므로 sold 여도 404 가 아니다 — 태그 옆 "판매완료" 배지, "구매 문의" 버튼 대신 비활성
+  "판매완료" 표시, CTA 아래 "판매완료된 상품입니다. 같은 옷은 1점만 있어 재입고되지 않습니다."
+  고지문을 데스크톱·모바일 양쪽에 추가했다.
+  `--write` 로 실제 실행해 7건의 status 를 `sold` 로 바꿨다 — `carhartt-duck-active-jacket-usa-l`
+  (품절), `patagonia-synchilla-fleece-navy-m`(품절), `patagonia-micro-d-hoodie-xl`(삭제됨,
+  soft-404), `patagonia-reversible-fleece-l`(판매자 숨김), `american-vintage-plaid-flannel-os`
+  (품절), `levis-501-90s-usa-32-32`(품절), `levis-504-selvedge-32`(품절). 나머지 22건은 판매중
+  (가격 변동 있던 건도 있으나 원가는 자동으로 안 바꿈 — 지시대로 마진 판단은 사람 몫으로 남김).
+  unknown 은 이번 회차 0건이라 되돌린 것 없음.
+  `.github/workflows/`·`ops/` 는 건드리지 않았다 — 다음 항목(2/2, 스케줄 자동 실행)의 범위다.
+  `npm run lint && npm run build` 통과 — 89개 라우트, 32개 상품 상세(`sold` 7건 포함) 전부
+  정적 생성 확인. `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/shop` `/m/shop` HTML에
+  sold 7건 slug 가 전부 0건(grep), 판매중 상품은 그대로 나옴, 홈(`/` `/m`) 코디 슬라이드에도
+  sold 품목(원래 kind:"top" 이던 `carhartt-duck-active-jacket-usa-l`)이 0건. sold 상세 페이지
+  (desktop/mobile 둘 다) curl 200 + "판매완료" 텍스트 존재 + "구매 문의" 텍스트 0건(비활성 표시로
+  교체됨) 확인. 실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
 
 ### 2026-08-24 (2)
 
