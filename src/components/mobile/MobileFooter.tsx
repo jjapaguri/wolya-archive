@@ -1,6 +1,16 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { businessInfo } from "@/data/business";
 import DesktopViewLink from "./DesktopViewLink";
+
+const businessFields = [
+  { label: "상호", value: businessInfo.name },
+  { label: "대표자", value: businessInfo.representative },
+  { label: "사업자등록번호", value: businessInfo.registrationNumber },
+  { label: "통신판매업", value: businessInfo.mailOrderLicenseNumber },
+  { label: "사업장 소재지", value: businessInfo.address, wide: true },
+  { label: "연락처", value: businessInfo.phone },
+].filter((field) => field.value !== "");
 
 function Row({
   label,
@@ -32,20 +42,13 @@ export default function MobileFooter() {
 
       <div className="mb-10 flex flex-col gap-8">
         <div className="flex flex-col gap-3">
-          <div className="mb-2 font-serif text-xl text-fg italic">[브랜드/샵 이름]</div>
+          <div className="mb-2 font-serif text-xl text-fg italic">WOLYA ARCHIVE</div>
           <div className="word-keep-all flex flex-col gap-1 font-kr text-[11px] leading-[1.6] text-fg/60">
-            <Row label="대표자">전종민</Row>
-            <Row label="사업자등록번호">
-              [000-00-00000]
-              <br />
-              <a href="#" className="mt-1 inline-block text-fg/40 underline">
-                [사업자정보 확인]
-              </a>
-            </Row>
-            <Row label="통신판매업">[제0000-서울OO-0000호]</Row>
-            <Row label="사업장 소재지" wide>
-              [주소 전체 — 우편번호 포함]
-            </Row>
+            {businessFields.map((field) => (
+              <Row key={field.label} label={field.label} wide={field.wide}>
+                {field.value}
+              </Row>
+            ))}
           </div>
         </div>
 

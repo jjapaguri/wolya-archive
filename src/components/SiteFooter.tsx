@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { businessInfo } from "@/data/business";
 
 function InstagramIcon() {
   return (
@@ -22,16 +23,14 @@ function KakaoIcon() {
   );
 }
 
-const contactFields = [
-  { label: "대표자", value: "전종민" },
-  {
-    label: "사업자등록번호",
-    value: "[000-00-00000]",
-    link: { href: "#", text: "[사업자정보 확인] (공정위 표준 링크)" },
-  },
-  { label: "통신판매업 신고번호", value: "[제0000-서울OO-0000호]" },
-  { label: "사업장 소재지", value: "[주소 전체 — 우편번호 포함]" },
-];
+const businessFields = [
+  { label: "상호", value: businessInfo.name },
+  { label: "대표자", value: businessInfo.representative },
+  { label: "사업자등록번호", value: businessInfo.registrationNumber },
+  { label: "통신판매업 신고번호", value: businessInfo.mailOrderLicenseNumber },
+  { label: "사업장 소재지", value: businessInfo.address },
+  { label: "연락처", value: businessInfo.phone },
+].filter((field) => field.value !== "");
 
 const supportFields = [
   { label: "고객센터", value: "[전화번호]", note: "(운영시간 [10:00~22:00], 주말/공휴일 휴무)" },
@@ -63,7 +62,7 @@ export default function SiteFooter() {
         <div className="mb-[60px] grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-[60px]">
           <div className="flex flex-col gap-4">
             <div className="mb-5 font-serif text-2xl text-fg italic">WOLYA ARCHIVE</div>
-            {contactFields.map((field) => (
+            {businessFields.map((field) => (
               <div
                 key={field.label}
                 className="word-keep-all flex flex-wrap items-baseline gap-3 font-kr text-sm leading-[1.6] text-fg/60"
@@ -72,14 +71,6 @@ export default function SiteFooter() {
                   {field.label}
                 </span>
                 <span className="text-fg/80">{field.value}</span>
-                {field.link && (
-                  <a
-                    href={field.link.href}
-                    className="text-fg/50 underline decoration-solid underline-offset-[3px] transition-colors hover:text-accent"
-                  >
-                    {field.link.text}
-                  </a>
-                )}
               </div>
             ))}
           </div>
