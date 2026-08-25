@@ -71,6 +71,12 @@
   > 저장하지 않아도 된다", "킬스위치 한 곳으로 확실히 멈출 수 있다"). Actions 가 push 하는 방식으로
   > 바꾸면 이 보안 판단을 뒤집는 것이라 무인 자동화가 결정할 범위가 아니다. "앱↔DB 연결층 A1" 은
   > 이 항목 원문 그대로 사람 확인 3가지가 남아 있어 여전히 범위 밖. 실행 가능한 항목 없어 PR 없이 종료.
+  > 2026-08-25 dev-loop: 재확인, 변동 없음. 열린 `auto/` PR 0건. `src/app`·`src/components` 의
+  > `product-queries`/`lib/db` import 는 여전히 0건, `package.json` dependencies 도 `next`/`pg`/
+  > `react`/`react-dom` 그대로 — A1 은 여전히 사람 확인 3가지가 막고 있다. P2 "서버에서 빌드 안 함"
+  > 은 `.github/workflows/` 변경이 필요한데, 같은 이유(GitHub App 토큰에 `workflows` 권한 없음)로
+  > 지난 회차(source-watch, #17 계열) 자동화 시도가 두 번 구조적으로 실패한 전례가 있어 이번에도
+  > 시도하지 않았다. 실행 가능한 항목 없어 PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
