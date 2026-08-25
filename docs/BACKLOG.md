@@ -51,20 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `auto` **매물 후보 5건을 상품으로 등록 — 데이터는 `docs/2026-08-25-candidates-5.json`**
-  JSON 5건(id 33~37)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다.
-  기존 32건은 건드리지 않는다. `Product` 타입은 이미 완성돼 있어 타입 변경이 필요 없다.
-  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
-  - **`sourceUrl` 과 `sourcePrice` 는 `products.ts` 에 넣지 마라.** 두 필드는 PR #16 에서
-    클라이언트 경계 밖으로 뺐다. JSON 의 그 두 값은 **`src/data/product-sourcing.ts`** 의
-    `productSourcing` 맵에 slug 키로 넣는다. `products.ts` 에 넣으면 목록 페이지 소스로 다시 샌다.
-  - 전 건 `status: "preorder"`. 하의 3 / 상의 2 라 홈 교차 슬라이드는 그대로 유지된다.
-  - `note` 가 5건 전부 있다 — 상세페이지 "판매자 고지" 로 노출된다. 33번은 허리 리폼 이력,
-    35·36번은 폴로 라벨 미확인 경고라 빠지면 안 된다.
-  - **빌드 산출물의 `/shop` `/m/shop` HTML 에서 `sourcePrice` · `sourceUrl` ·
-    `fruitsfamily.com/product` 문자열이 0건인지 확인**하고 그 결과를 PR 본문에 적어라.
-  - `npm run lint && npm run build` 통과 확인. `.github/workflows/` 와 `ops/` 는 건드리지 마라.
-
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
   > 2026-08-21 dev-loop: 이 항목은 본문에 이미 "지금 만들면 버려질 코드" 라고 적혀 있어 건너뛰었다.
   > 아래 P2 두 항목도 각각 금지 경로(`ops/`·`.github/workflows/`)와 범위 초과로 자동화 대상이 아니다 — 이번 실행은 PR 없이 종료.
@@ -125,6 +111,34 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-25
+
+- [x] `auto` **매물 후보 5건을 상품으로 등록 — `docs/2026-08-25-candidates-5.json`**
+  사람이 이번 실행에 직접 지정한 항목. JSON 5건(id 33~37)을 `src/data/products.ts` 의
+  `products` 배열에 그대로 추가했다(기존 32건은 손대지 않음, `Product` 타입 변경 없음).
+  `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 쓰는 템플릿 리터럴로 옮겼다.
+  지시대로 `sourcePrice`·`sourceUrl` 두 값은 `products.ts` 에 넣지 않고 서버 전용 모듈
+  `src/data/product-sourcing.ts` 의 `productSourcing` 맵에 slug 키로만 추가했다(기존 5건
+  분량 그대로 이어붙임, JSON 의 실제 값 그대로 — 지어내지 않음). 배열 삽입 위치는 기존
+  id 32(꼼데가르송 포켓 팬츠) 바로 뒤, id 순서(1~37)가 끊기지 않게 정리했다.
+  전 5건 `status: "preorder"` — 데스크톱·모바일 상세페이지에 기존 예약주문 배지·고정 문구가
+  그대로 적용됨을 확인했다. 하의 3(리바이스 501 빅E, 칼하트 싱글니 카펜터, 폴로 치노) /
+  상의 2(폴로 코듀로이 블레이저, 파타고니아 레트로X)라 홈 코디 교차 슬라이드 조건
+  (`OUTFIT_ROW_MIN_ITEMS`=2)에 영향 없음.
+  `note` 5건 전부 상세페이지 하단 "판매자 고지" 로 그대로 노출되는 것을 확인했다 — 33번
+  (리바이스 501, 허리 새깅 리폼 이력), 35·36번(폴로 치노·블레이저, 라벨 미확인 경고)
+  포함 전부 텍스트가 빠지지 않고 나옴.
+  `db/migrations/`·`ops/`·`.github/workflows/`·`AGENTS.md`·`next.config.ts`·결제/주문 코드·
+  `package.json` 의존성 어느 것도 건드리지 않았다.
+  `npm run lint && npm run build` 통과 — 99개 라우트, 37개 상품 `/product/[slug]`
+  `/m/product/[slug]` 전부 정적 생성 확인(빌드 로그 "+34 more paths", 기존 3 + 34 = 37).
+  `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/shop`·`/m/shop` HTML 양쪽에서
+  `sourcePrice`·`sourceUrl`·`fruitsfamily.com/product` 문자열이 **0건**(grep 카운트 0),
+  두 목록 페이지 HTML에 신규 5건 slug 가 전부 등장, 5건의 상세페이지가 desktop `/product/*`·
+  mobile `/m/product/*` 양쪽 모두 curl 200, 홈(`/`)의 `outfit-row-top`/`outfit-row-bottom`
+  구간이 그대로 유지되는 것도 확인했다. 실제 브라우저(휴대폰 포함)로는 보지 않았다 —
+  curl·정적 HTML 검증까지만 했다.
 
 ### 2026-08-24 (2)
 

@@ -51,4 +51,9 @@ export const productSourcing: Record<string, ProductSourcing> = {
   "cdg-homme-two-tuck-chino-ad1992": { sourcePrice: 149100, sourceUrl: "https://fruitsfamily.com/product/6dpt5" },
   "cdg-homme-nylon-straight-pants-ad2000": { sourcePrice: 200000, sourceUrl: "https://fruitsfamily.com/product/6d4pj" },
   "cdg-homme-pocket-pants-m": { sourcePrice: 200000, sourceUrl: "https://fruitsfamily.com/product/6axez" },
+  "levis-501-bige-selvedge-29": { sourcePrice: 150000, sourceUrl: "https://fruitsfamily.com/product/6edt4" },
+  "carhartt-single-knee-carpenter-ptb-34": { sourcePrice: 140000, sourceUrl: "https://fruitsfamily.com/product/5pcsx" },
+  "polo-classic-fit-chino-beige-30": { sourcePrice: 115000, sourceUrl: "https://fruitsfamily.com/product/6dobz" },
+  "polo-corduroy-blazer-brown-xl": { sourcePrice: 165000, sourceUrl: "https://fruitsfamily.com/product/6cjnx" },
+  "patagonia-retro-x-natural-l": { sourcePrice: 180000, sourceUrl: "https://fruitsfamily.com/product/629k9" },
 };
