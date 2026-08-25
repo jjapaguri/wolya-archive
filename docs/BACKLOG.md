@@ -83,6 +83,33 @@
   > `product-queries`/`lib/db` import 는 여전히 0건, `package.json` dependencies 도 `next`/`pg`/
   > `react`/`react-dom` 그대로 — A1 은 여전히 사람 확인 3가지가 막고 있다. P2 "서버에서 빌드 안 함"
   > 도 `.github/workflows/` 금지 경로 그대로. 실행 가능한 항목 없어 PR 없이 종료.
+  > 2026-08-25 dev-loop (3): 사람이 이번 실행에 "앱↔DB 연결층"을 직접 지정해 P2 항목을 순서를
+  > 건너뛰고 먼저 조사했다 — 구현을 시도했으나 착수 전 확인만으로 **이번 세션에서 완료 불가능한
+  > 새로운 구체적 근거 3가지**를 확인해 코드 변경 없이 멈췄다.
+  > (1) `.github/workflows/` 어디에도 `DATABASE_URL` 이 없다(`grep -rn DATABASE_URL
+  > .github/workflows/` 결과 0건). `src/data/products.ts` 를 DB 조회로 바꾸면 상세페이지
+  > `generateStaticParams`(빌드타임 SSG)가 DB 접속을 시도하는데, PR 을 열면 도는 CI(`npm run
+  > build`)엔 이 값이 없다 — 즉 지금 구조 그대로 스위치를 넘기면 **이 dev-loop 가 완료 기준으로
+  > 요구하는 `npm run build` 통과 자체가 CI 에서 구조적으로 불가능**하다. 이 문제를 풀려면
+  > 상세페이지를 SSG 에서 런타임 동적 렌더링으로 바꾸거나(운영 서버는 로컬 DB 접속이 되므로
+  > 이 경로는 가능) GitHub Actions 에 운영 DB 접속 경로를 새로 열어야 하는데 후자는 `listen_
+  > addresses=localhost` 를 깨는 보안 판단이라 무인 자동화가 결정할 범위가 아니다.
+  > (2) 이 Claude Code 세션 자체에 `DATABASE_URL` 도 로컬 DB 도 없다(env 확인·`~/.ssh/config`
+  > 확인 둘 다 비어 있음) — 코드를 바꿔도 이번 세션에서 로컬로 실제 조회 결과를 확인할 방법이
+  > 없다. `db/HANDOFF-앱-DB-연결.md` 완료 기준 2번("로컬에서 실제 DB 상품이 뜬다")을 이 세션은
+  > 원천적으로 만족시킬 수 없다.
+  > (3) `src/lib/product-queries.ts` 의 `mapRow` 를 다시 읽었다 — `status` 를 항상 `"available"`
+  > 로 고정하고 `note`/`sourceUrl` 은 아예 매핑하지 않는다(006/007 마이그레이션에 해당 컬럼이
+  > 없음). 지금 `products.ts` 는 37건 중 10건이 `preorder`/`sold`(그중 5건은 `note` 판매자
+  > 고지 포함)다. 게다가 `007_seed_initial_products.up.sql` 은 최초 3건만 시드한다 — DB 에
+  > 실제로 몇 건이 들어있든 지금 매퍼로 화면을 그대로 전환하면 예약주문·품절·판매자 고지 표시가
+  > 전부 사라지고 상품 수도 37→3 근처로 급감한다. "상품 0건일 때 안 깨지는지" 가 아니라
+  > "34건이 소리 없이 사라지는" 훨씬 심각한 회귀다 — 사람이 데이터 이관 계획(컬럼 추가 또는
+  > 마이그레이션 확장)을 먼저 정해야 코드를 안전하게 짤 수 있다.
+  > 위 세 가지는 모두 "범위가 커서 사람이 봐야 한다"는 기존 메모보다 한 단계 더 구체적인,
+  > 이번에 새로 확인한 차단 사유다. `db/HANDOFF-앱-DB-연결.md` 에 (1)·(3) 을 반영해 다음
+  > 시도가 같은 조사를 반복하지 않게 해야 한다(이번 실행 범위 밖이라 문서 자체는 고치지 않음).
+  > 코드·문서(BACKLOG 제외) 변경 없음, PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
