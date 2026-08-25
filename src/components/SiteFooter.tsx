@@ -52,13 +52,6 @@ export default function SiteFooter() {
   return (
     <footer className="relative z-10 border-t border-border bg-bg px-6 pt-20 pb-10 lg:px-20">
       <div className="mx-auto max-w-[1200px]">
-        <div className="word-keep-all mb-10 border-b border-border py-5 font-kr text-xs leading-[1.6] text-fg/50">
-          전자상거래법(통신판매업 신고 사업자)상 하단 고지 의무 항목입니다.
-          ⚠️ 통신판매업 신고번호·사업자등록번호는 관할 시/군/구청 또는
-          정부24에서 신고 후 발급받은 실제 번호를 기재해야 합니다. 미신고
-          상태로 온라인 판매·광고를 지속하면 과태료 대상입니다.
-        </div>
-
         <div className="mb-[60px] grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-[60px]">
           <div className="flex flex-col gap-4">
             <div className="mb-5 font-serif text-2xl text-fg italic">WOLYA ARCHIVE</div>

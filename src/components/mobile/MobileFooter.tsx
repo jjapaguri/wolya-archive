@@ -34,12 +34,6 @@ function Row({
 export default function MobileFooter() {
   return (
     <footer className="relative z-10 bg-bg px-6 py-12">
-      <div className="word-keep-all mb-8 border-b border-fg/10 pb-6 font-kr text-[10px] leading-[1.6] text-fg/40">
-        전자상거래법(통신판매업 신고 사업자)상 하단 고지 의무 항목입니다. 통신판매업
-        신고번호·사업자등록번호는 관할 시/군/구청 또는 정부24에서 신고 후 발급받은 실제 번호를
-        기재해야 합니다.
-      </div>
-
       <div className="mb-10 flex flex-col gap-8">
         <div className="flex flex-col gap-3">
           <div className="mb-2 font-serif text-xl text-fg italic">WOLYA ARCHIVE</div>
