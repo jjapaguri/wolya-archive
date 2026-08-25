@@ -51,22 +51,6 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
-- [ ] `review` **원본 매물 생존 체크 (2/2) — 하루 3회 자동 실행** (앞 항목이 병합된 뒤에 한다)
-  `.github/workflows/source-watch.yml` 을 새로 만든다. 금지 경로라 자동 병합하지 않는다.
-  - cron 하루 3회, KST 09/15/21 (UTC 00/06/12). dev-loop(03/11/19 KST)와 시간이 겹치지 않게 둔다.
-  - `node scripts/check-source-availability.mjs --write` → 변경이 있으면 커밋 → CI → 배포.
-    **변경이 없으면 커밋하지 않는다.** 빈 커밋으로 로그를 더럽히지 않는다.
-  - `workflow_dispatch` 도 열어둬서 손으로 돌릴 수 있게 한다.
-  - **원가 변동은 `sold` 처리와 분리해 로그만 남긴다.** 자동으로 판매가를 바꾸지 마라 — 마진 판단은 사람이 한다.
-    지금 할인가가 걸린 4건(`6c4i0` · `5ul0z` · `4sgch` · `6dpt5`)이 할인 종료로 원가가 오르면 여기 걸린다.
-  - 안전밸브(40% 룰)에 걸리면 커밋하지 말고 **워크플로를 실패시켜라.** heartbeat 처럼 눈에 띄어야 한다.
-  - 첫 단계에서 `ops/automation.json` 의 `enabled` 를 읽어 꺼져 있으면 no-op 종료 (다른 워크플로와 같은 규약).
-  > 2026-08-24 dev-loop: 구현은 끝냈다(lint·build 통과) — `git push` 가 "refusing to allow a GitHub
-  > App to create or update workflow ... without `workflows` permission" 로 거부됐다. 이 세션의
-  > GitHub App 토큰엔 `.github/workflows/` 를 건드릴 권한 자체가 없다. PR 을 못 열어 로컬 브랜치는
-  > 버렸다. 사람이 직접(또는 권한 있는 세션에서) 만들어야 한다 — 내용은 이 항목 그대로.
-
-
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
   > 2026-08-21 dev-loop: 이 항목은 본문에 이미 "지금 만들면 버려질 코드" 라고 적혀 있어 건너뛰었다.
   > 아래 P2 두 항목도 각각 금지 경로(`ops/`·`.github/workflows/`)와 범위 초과로 자동화 대상이 아니다 — 이번 실행은 PR 없이 종료.
@@ -121,6 +105,24 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-24 (2)
+
+- [x] `review` **원본 매물 생존 체크 (2/2) — 3시간 간격 자동 실행 (`.github/workflows/source-watch.yml`)**
+  dev-loop 이 두 번 시도했지만 **GitHub App 토큰에 `workflows` 권한이 없어 구조적으로 불가능했다**
+  (`refusing to allow a GitHub App to create or update workflow`). 사람 세션(브라우저)에서 직접 만들어 커밋했다.
+  `bdc9277`. 앞으로도 `.github/workflows/` 변경은 dev-loop 에 맡기지 말 것 — 시도 자체가 실패한다.
+  - cron `30 */3 * * *` — 3시간 간격. KST 09:30/12:30/15:30/18:30/21:30/00:30/03:30/06:30.
+    UTC 30분에 걸어 dev-loop(UTC 18/2/10 정각)와 겹치지 않게 했다. `concurrency` 로 중복 실행도 막는다.
+  - `killswitch` 잡이 `ops/automation.json` 의 `enabled` 를 먼저 읽는다. 꺼져 있으면 no-op.
+  - `node --experimental-strip-types scripts/check-source-availability.mjs --write` 실행 →
+    `src/data/products.ts` 에 변경이 있을 때만 커밋한다(`git diff --quiet` 가드). 빈 커밋 안 만든다.
+  - 안전밸브는 스크립트가 담당한다 — dead 40% 초과 시 아무것도 쓰지 않고 `exitCode 1`,
+    그러면 이 스텝이 실패하고 커밋 스텝은 아예 돌지 않는다.
+  - **검증(첫 수동 실행 #1, 1m 9s, 성공)**: 킬스위치 통과 → 체크 51s → `바뀐 매물 없음 — 커밋하지 않습니다`.
+    직전에 7건이 이미 `sold` 로 반영돼 있어 no-op 이 정답이었다. 프로덕션 재확인: `/shop` 카드 25개
+    (32 − sold 7), 예약주문 배지 22개, sold 상품 상세는 200 + 판매완료 표시 유지.
+  - 원가 변동은 로그로만 남는다. 자동으로 판매가를 바꾸지 않는다 — 마진 판단은 사람 몫.
 
 ### 2026-08-24 (3)
 
