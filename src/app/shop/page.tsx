@@ -22,10 +22,6 @@ export default function ShopPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-10 block font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase">
-          #전체 아이템
-        </span>
-
         <ShopGrid products={listedProducts} />
       </main>
       <SiteFooter />

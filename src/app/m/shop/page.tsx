@@ -22,10 +22,6 @@ export default function MobileShopPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #전체 아이템
-        </span>
-
         <MobileShopGrid products={listedProducts} />
       </main>
 

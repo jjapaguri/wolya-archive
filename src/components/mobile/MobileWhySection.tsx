@@ -16,10 +16,7 @@ const REASONS = [
 export default function MobileWhySection() {
   return (
     <section className="border-b border-fg/10 bg-bg px-6 py-16">
-      <div className="mb-14">
-        <span className="mb-4 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #공감
-        </span>
+      <div className="mb-10">
         <h2 className="word-keep-all mb-4 font-kr text-xl leading-[1.5] font-medium text-fg">
           옷 사는 데 시간 쓰기 싫은데, 대충 사면 꼭 후회하죠.
         </h2>
@@ -30,17 +27,12 @@ export default function MobileWhySection() {
       </div>
 
       <div>
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #왜 이 셀렉인가
-        </span>
-
         <div className="flex flex-col gap-8">
           {REASONS.map((reason) => (
             <div key={reason.figure} className="border-t border-fg/10 pt-8">
-              <span className="mb-4 block font-serif text-5xl leading-none text-accent italic">
+              <span className="mb-5 block font-serif text-5xl leading-none text-accent italic">
                 {reason.figure}
               </span>
-              <div className="mb-4 h-px w-8 bg-accent" />
               <p className="word-keep-all font-kr text-[14px] leading-[1.7] font-light text-fg/80">
                 {reason.body}
               </p>

@@ -20,15 +20,9 @@ export default function ArchivePage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase">
-          #Archive
-        </span>
-
-        <h1 className="word-keep-all mb-6 font-maruburi text-2xl leading-relaxed font-semibold lg:text-3xl">
+        <h1 className="word-keep-all mb-8 font-maruburi text-2xl leading-relaxed font-semibold lg:text-3xl">
           큐레이션 기록
         </h1>
-
-        <div className="mb-10 h-px w-10 bg-accent" />
 
         <p className="word-keep-all mb-10 font-kr text-sm leading-[1.8] font-light text-fg/70">
           시즌마다 선별해 온 아이템들의 기록을 이곳에 정리하고 있습니다.

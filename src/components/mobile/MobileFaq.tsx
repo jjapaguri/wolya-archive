@@ -47,10 +47,6 @@ const FAQS: { question: string; answer: ReactNode }[] = [
 export default function MobileFaq() {
   return (
     <section className="border-b border-fg/10 bg-bg px-6 py-16">
-      <span className="mb-8 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-        #FAQ
-      </span>
-
       <div className="flex flex-col gap-6">
         {FAQS.map((faq) => (
           <div key={faq.question} className="border-t border-fg/10 pt-6">

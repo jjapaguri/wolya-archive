@@ -21,10 +21,6 @@ export default function MobileFaqPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #FAQ
-        </span>
-
         <h1 className="word-keep-all mb-8 font-kr text-xl leading-relaxed font-medium">
           자주 묻는 질문
         </h1>

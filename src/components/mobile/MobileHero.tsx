@@ -21,10 +21,6 @@ export default function MobileHero() {
         </div>
       </div>
 
-      <div className="absolute top-6 left-6 bg-accent px-2 py-1 font-sans text-[8px] tracking-[0.1em] text-white">
-        NO. 074
-      </div>
-
       <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
         <span className="text-[8px] tracking-[0.3em] opacity-50">EXPLORE</span>
         <div className="h-[40px] w-px bg-gradient-to-b from-accent to-transparent" />

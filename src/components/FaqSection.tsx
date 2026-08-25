@@ -41,10 +41,6 @@ export default function FaqSection() {
   return (
     <section className="relative z-10 border-t border-border bg-bg px-6 py-20 lg:px-20 lg:py-[100px]">
       <div className="mx-auto max-w-[900px]">
-        <span className="mb-[60px] block font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase">
-          #FAQ
-        </span>
-
         <div className="flex flex-col gap-10">
           {faqs.map((faq) => (
             <div key={faq.q} className="border-t border-border pt-[30px]">
