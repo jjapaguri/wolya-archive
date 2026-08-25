@@ -77,6 +77,12 @@
   > 은 `.github/workflows/` 변경이 필요한데, 같은 이유(GitHub App 토큰에 `workflows` 권한 없음)로
   > 지난 회차(source-watch, #17 계열) 자동화 시도가 두 번 구조적으로 실패한 전례가 있어 이번에도
   > 시도하지 않았다. 실행 가능한 항목 없어 PR 없이 종료.
+  > 2026-08-25 dev-loop (2): 같은 날 재확인, 변동 없음. 열린 `auto/` PR 0건(`gh pr list` 0건 —
+  > 오늘 있던 매물 후보 5건 등록·모바일 푸터 아이콘 PR 은 이미 병합됐고 둘 다 사람이 이번 실행에
+  > 직접 지정한 항목이라 BACKLOG "## 할 일" 큐 소진과는 무관). `src/app`·`src/components` 의
+  > `product-queries`/`lib/db` import 는 여전히 0건, `package.json` dependencies 도 `next`/`pg`/
+  > `react`/`react-dom` 그대로 — A1 은 여전히 사람 확인 3가지가 막고 있다. P2 "서버에서 빌드 안 함"
+  > 도 `.github/workflows/` 금지 경로 그대로. 실행 가능한 항목 없어 PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
