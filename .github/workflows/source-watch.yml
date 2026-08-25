@@ -1,0 +1,80 @@
+name: Source Watch
+
+# 후루츠 원본 매물이 팔리거나 사라지면 우리 사이트에서 자동으로 내린다.
+# 무재고 1점물이라 원본이 죽으면 상세페이지가 유령이 된다 —
+# 실제로 등록 10시간 만에 29건 중 7건이 죽었다(2026-08-23).
+#
+# 판정은 scripts/check-source-availability.mjs 가 한다. 신호 다섯 개(meta in/out of stock,
+# 숨김, soft-404, HTTP 404)로 alive/dead/unknown 세 갈래만 낸다. unknown 은 절대 내리지 않는다.
+# 한 회차 dead 가 40% 를 넘으면 스크립트가 아무것도 쓰지 않고 exit 1 — 이 워크플로도 같이 실패한다.
+# (그 정도면 매물이 아니라 후루츠 구조가 바뀌었거나 우리가 차단된 것이다)
+#
+# ops/automation.json 의 enabled 가 false 면 아무것도 하지 않고 끝난다.
+
+on:
+  schedule:
+    # 3시간 간격. UTC 매 3시간 30분에 걸어 dev-loop(UTC 18/2/10 정각)와 겹치지 않게 했다.
+    # KST 로는 09:30 / 12:30 / 15:30 / 18:30 / 21:30 / 00:30 / 03:30 / 06:30.
+    - cron: "30 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 앞 회차가 아직 돌고 있으면 겹쳐 돌지 않는다 — 같은 파일을 두 번 커밋하는 사고를 막는다.
+concurrency:
+  group: source-watch
+  cancel-in-progress: false
+
+jobs:
+  killswitch:
+    name: 킬스위치 확인
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+
+      - id: check
+        run: |
+          go=$(python3 -c '
+          import json
+          try:
+              d = json.load(open("ops/automation.json"))
+          except Exception:
+              print("no"); raise SystemExit
+          print("yes" if d.get("enabled") else "no")
+          ')
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          [ "$go" = "yes" ] || echo "::notice::킬스위치가 꺼져 있어 아무것도 하지 않고 종료합니다"
+
+  watch:
+    name: 원본 매물 생존 체크
+    needs: killswitch
+    if: needs.killswitch.outputs.go == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+
+      # 죽은 매물을 products.ts 의 status: "sold" 로 반영한다.
+      # 원가(sourcePrice) 변동은 로그로만 남기고 자동으로 바꾸지 않는다 — 마진 판단은 사람 몫이다.
+      - name: 생존 체크 + sold 반영
+        run: node --experimental-strip-types scripts/check-source-availability.mjs --write
+
+      - name: 변경이 있으면 커밋
+        run: |
+          if git diff --quiet -- src/data/products.ts; then
+            echo "::notice::바뀐 매물 없음 — 커밋하지 않습니다"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/products.ts
+          git commit -m "chore(source-watch): 원본이 사라진 매물을 sold 로 내림"
+          git push
