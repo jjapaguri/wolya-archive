@@ -3,6 +3,32 @@ import Link from "next/link";
 import { businessInfo } from "@/data/business";
 import DesktopViewLink from "./DesktopViewLink";
 
+/**
+ * 소셜 아이콘 — 데스크톱 `SiteFooter` 와 같은 path 를 쓴다.
+ * 모바일 컴포넌트는 데스크톱 것을 import 하지 않는 규칙이라 복사해 둔다 (`docs/MAP.md`).
+ */
+function InstagramIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function KakaoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.79-.2.75-.74 2.75-.84 3.18-.13.53.2.52.42.38.17-.11 2.72-1.85 3.82-2.6.6.09 1.22.13 1.84.13 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
 /** 카카오톡 채널 — 하단 소셜 링크와 교환·반품 문의가 같이 쓴다 */
 const KAKAO_CHANNEL_URL = "http://pf.kakao.com/_bvxlSX";
 
@@ -35,6 +61,8 @@ function Row({
 }
 
 export default function MobileFooter() {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="relative z-10 bg-bg px-6 py-12">
       <div className="mb-10 flex flex-col gap-8">
@@ -89,7 +117,7 @@ export default function MobileFooter() {
           rel="noopener noreferrer"
           className="flex items-center gap-2 active:opacity-50"
         >
-          <span>[IG]</span> 인스타그램 @iwannabebratpitt
+          <InstagramIcon /> 인스타그램 @iwannabebratpitt
         </a>
         <a
           href={KAKAO_CHANNEL_URL}
@@ -97,7 +125,7 @@ export default function MobileFooter() {
           rel="noopener noreferrer"
           className="flex items-center gap-2 active:opacity-50"
         >
-          <span>[KT]</span> 카카오톡 채널 아카이브_월야
+          <KakaoIcon /> 카카오톡 채널 아카이브_월야
         </a>
       </div>
 
@@ -116,7 +144,7 @@ export default function MobileFooter() {
       </div>
 
       <div className="text-center text-[9px] tracking-[0.05em] text-fg/30">
-        © 2024 [브랜드명]. ALL RIGHTS RESERVED.
+        © {year} WOLYA ARCHIVE. All rights reserved.
       </div>
     </footer>
   );
