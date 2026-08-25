@@ -32,12 +32,39 @@ const businessFields = [
   { label: "연락처", value: businessInfo.phone },
 ].filter((field) => field.value !== "");
 
-const supportFields = [
-  { label: "고객센터", value: "[전화번호]", note: "(운영시간 [10:00~22:00], 주말/공휴일 휴무)" },
-  { label: "이메일", value: "[contact@example.com]" },
-  { label: "개인정보관리책임자", value: "[담당자명 / 이메일]" },
-  { label: "교환·반품 문의", value: "[전용 채널 안내 — 예: 카카오톡 채널 또는 이메일]" },
-  { label: "반품 주소", value: "[실제 반품 수령 주소]" },
+/** 카카오톡 채널 — 하단 소셜 링크와 교환·반품 문의가 같이 쓴다 */
+const KAKAO_CHANNEL_URL = "http://pf.kakao.com/_bvxlSX";
+
+type SupportField = {
+  label: string;
+  value: string;
+  /** 값에 링크를 걸 주소. 없으면 텍스트로만 보여준다 */
+  href?: string;
+  /** 새 탭으로 여는 외부 링크인지 */
+  external?: boolean;
+  note?: string;
+};
+
+const supportFields: SupportField[] = [
+  {
+    label: "고객센터",
+    value: businessInfo.phone,
+    href: `tel:${businessInfo.phone.replace(/-/g, "")}`,
+    note: "(운영 10:00~22:00, 주말/공휴일 휴무)",
+  },
+  { label: "이메일", value: businessInfo.email, href: `mailto:${businessInfo.email}` },
+  {
+    label: "개인정보관리책임자",
+    value: `${businessInfo.representative} / ${businessInfo.email}`,
+  },
+  {
+    label: "교환·반품 문의",
+    value: "카카오톡 채널 아카이브_월야",
+    href: KAKAO_CHANNEL_URL,
+    external: true,
+  },
+  // 주소는 복사해 두지 않는다 — 사업장 소재지가 바뀌면 businessInfo 한 곳만 고치면 되게
+  { label: "반품 주소", value: "사업장 소재지와 동일" },
 ];
 
 const legalLinks = [
@@ -77,7 +104,19 @@ export default function SiteFooter() {
                 <span className="min-w-[120px] text-[10px] font-medium tracking-[0.15em] text-accent uppercase">
                   {field.label}
                 </span>
-                <span className="text-fg/80">{field.value}</span>
+                {field.href ? (
+                  <a
+                    href={field.href}
+                    {...(field.external
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
+                    className="text-fg/80 transition-colors hover:text-accent"
+                  >
+                    {field.value}
+                  </a>
+                ) : (
+                  <span className="text-fg/80">{field.value}</span>
+                )}
                 {field.note && <span className="text-xs text-fg/40">{field.note}</span>}
               </div>
             ))}
@@ -96,7 +135,7 @@ export default function SiteFooter() {
             <InstagramIcon /> 인스타그램 @iwannabebratpitt
           </a>
           <a
-            href="http://pf.kakao.com/_bvxlSX"
+            href={KAKAO_CHANNEL_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 transition-colors hover:text-accent"

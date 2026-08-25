@@ -14,6 +14,8 @@ export const businessInfo = {
   address: "인천광역시 연수구 컨벤시아대로42번길 96",
   /** 연락처 */
   phone: "010-2814-9773",
+  /** 문의 이메일 — 개인정보관리책임자 연락처로도 쓴다 */
+  email: "chun.percy@gmail.com",
   /** 통신판매업 신고번호 — 접수 대기 중이라 기본값은 빈 문자열이다 */
   mailOrderLicenseNumber: "",
 };

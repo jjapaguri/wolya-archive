@@ -3,6 +3,9 @@ import Link from "next/link";
 import { businessInfo } from "@/data/business";
 import DesktopViewLink from "./DesktopViewLink";
 
+/** 카카오톡 채널 — 하단 소셜 링크와 교환·반품 문의가 같이 쓴다 */
+const KAKAO_CHANNEL_URL = "http://pf.kakao.com/_bvxlSX";
+
 const businessFields = [
   { label: "상호", value: businessInfo.name },
   { label: "대표자", value: businessInfo.representative },
@@ -48,16 +51,32 @@ export default function MobileFooter() {
 
         <div className="word-keep-all flex flex-col gap-1 font-kr text-[11px] leading-[1.6] text-fg/60">
           <Row label="고객센터">
-            [전화번호]
+            <a href={`tel:${businessInfo.phone.replace(/-/g, "")}`} className="active:opacity-50">
+              {businessInfo.phone}
+            </a>
             <br />
-            <span className="text-[10px] text-fg/40">(운영 10:00~22:00, 주말 휴무)</span>
+            <span className="text-[10px] text-fg/40">(운영 10:00~22:00, 주말/공휴일 휴무)</span>
           </Row>
-          <Row label="이메일">[contact@example.com]</Row>
-          <Row label="개인정보책임">[담당자명 / 이메일]</Row>
-          <Row label="교환·반품 문의">[카카오톡 채널 안내]</Row>
-          <Row label="반품 주소" wide>
-            [실제 반품 수령 주소]
+          <Row label="이메일">
+            <a href={`mailto:${businessInfo.email}`} className="active:opacity-50">
+              {businessInfo.email}
+            </a>
           </Row>
+          <Row label="개인정보책임" wide>
+            {businessInfo.representative} / {businessInfo.email}
+          </Row>
+          <Row label="교환·반품 문의" wide>
+            <a
+              href={KAKAO_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="active:opacity-50"
+            >
+              카카오톡 채널 아카이브_월야
+            </a>
+          </Row>
+          {/* 주소는 복사해 두지 않는다 — 소재지가 바뀌면 businessInfo 한 곳만 고치면 되게 */}
+          <Row label="반품 주소">사업장 소재지와 동일</Row>
         </div>
       </div>
 
@@ -73,7 +92,7 @@ export default function MobileFooter() {
           <span>[IG]</span> 인스타그램 @iwannabebratpitt
         </a>
         <a
-          href="http://pf.kakao.com/_bvxlSX"
+          href={KAKAO_CHANNEL_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 active:opacity-50"
