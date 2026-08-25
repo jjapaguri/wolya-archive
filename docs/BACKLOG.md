@@ -51,6 +51,20 @@
 > 모바일 병합이 끝났으므로(2026-08-18) 아래 항목들은 이제 **`/` 와 `/m` 양쪽을 만들 수 있다.**
 > 위의 "이중 라우트 규칙" 을 반드시 지킬 것.
 
+- [ ] `auto` **매물 후보 5건을 상품으로 등록 — 데이터는 `docs/2026-08-25-candidates-5.json`**
+  JSON 5건(id 33~37)을 `src/data/products.ts` 의 `products` 배열에 그대로 추가한다.
+  기존 32건은 건드리지 않는다. `Product` 타입은 이미 완성돼 있어 타입 변경이 필요 없다.
+  - `image`/`images` 의 `@IMG@` 는 파일 상단 `IMG` 상수를 뜻한다 — 템플릿 리터럴로 옮긴다.
+  - **`sourceUrl` 과 `sourcePrice` 는 `products.ts` 에 넣지 마라.** 두 필드는 PR #16 에서
+    클라이언트 경계 밖으로 뺐다. JSON 의 그 두 값은 **`src/data/product-sourcing.ts`** 의
+    `productSourcing` 맵에 slug 키로 넣는다. `products.ts` 에 넣으면 목록 페이지 소스로 다시 샌다.
+  - 전 건 `status: "preorder"`. 하의 3 / 상의 2 라 홈 교차 슬라이드는 그대로 유지된다.
+  - `note` 가 5건 전부 있다 — 상세페이지 "판매자 고지" 로 노출된다. 33번은 허리 리폼 이력,
+    35·36번은 폴로 라벨 미확인 경고라 빠지면 안 된다.
+  - **빌드 산출물의 `/shop` `/m/shop` HTML 에서 `sourcePrice` · `sourceUrl` ·
+    `fruitsfamily.com/product` 문자열이 0건인지 확인**하고 그 결과를 PR 본문에 적어라.
+  - `npm run lint && npm run build` 통과 확인. `.github/workflows/` 와 `ops/` 는 건드리지 마라.
+
 - [ ] `review` **로그인 메뉴 — 지금은 만들지 말고 순서를 먼저 보라**
   > 2026-08-21 dev-loop: 이 항목은 본문에 이미 "지금 만들면 버려질 코드" 라고 적혀 있어 건너뛰었다.
   > 아래 P2 두 항목도 각각 금지 경로(`ops/`·`.github/workflows/`)와 범위 초과로 자동화 대상이 아니다 — 이번 실행은 PR 없이 종료.
