@@ -5,6 +5,13 @@
  * 기본은 `--dry-run`(사실상 아무 플래그도 안 주는 것과 같다) — 결과만 보고하고 아무것도 쓰지 않는다.
  * `--write` 를 주면 dead 로 판정된 slug 의 `src/data/products.ts` `status` 를 `"sold"` 로 바꾼다.
  *
+ * A1(2026-08-25) 이후에도 **쓰는 대상은 그대로 `src/data/products.ts` 다.** 화면은 DB 를
+ * 읽지만, 이 스크립트가 도는 GitHub Actions 에서는 운영 DB 에 닿을 수 없다
+ * (`listen_addresses=localhost`). 그래서 여기서 sold 로 내린 slug 는
+ * `src/lib/products.ts` 가 DB 조회 결과 위에 덮어쓰는 방식으로 화면에 반영된다 —
+ * 즉 이 파일의 판정은 배포를 거쳐 여전히 사이트에 도달한다. 흐름을 바꾸려면
+ * `docs/BACKLOG.md` 의 "품절 판정을 DB 로 직접 반영" 항목을 먼저 처리할 것.
+ *
  * 판정 신호는 실측으로 확정했다(2026-08-23, `docs/BACKLOG.md`). `GET fruitsfamily.com/product/{id}`
  * 는 서버 렌더 HTML이라 JS 실행 없이 정규식으로 충분하다.
  *

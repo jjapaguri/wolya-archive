@@ -1,12 +1,23 @@
 /**
- * 상품 데이터 — 사이트 전체(데스크톱 `/`, 모바일 `/m`)가 이 파일 하나를 공유한다.
+ * 상품 원장 + 공유 타입 — **화면은 더 이상 이 배열을 직접 읽지 않는다(A1, 2026-08-25).**
+ *
+ * 화면이 상품을 가져오는 곳은 `src/lib/products.ts` 다. 이 파일에 남은 역할은 셋:
+ *
+ *   1. **공유 타입·상수** — `Product`, `CATEGORIES`, `formatPrice`, `fillRow` 등.
+ *      데스크톱·모바일 양쪽의 "use client" 컴포넌트가 여기서 가져간다.
+ *      그래서 **이 파일은 절대 `@/lib/db` 를 import 하면 안 된다** — `pg` 가 브라우저
+ *      번들로 끌려 들어가 빌드가 module-not-found 로 죽는다. (실측으로 확인함)
+ *   2. **DB 시드의 원본** — `scripts/gen_seed_sql.mjs` 가 이 배열에서
+ *      `db/migrations/009_seed_all_products.up.sql` 을 생성한다.
+ *   3. **폴백 원장** — DB 가 비었거나 못 읽힐 때 `src/lib/products.ts` 가 이 배열을
+ *      그대로 내보낸다. 그래서 마이그레이션 적용 전에 배포돼도 사이트가 비지 않는다.
+ *      원본 매물 생존 체크(`scripts/check-source-availability.mjs`)가 3시간마다
+ *      `status` 를 `"sold"` 로 바꿔 커밋하는 대상도 여전히 이 배열이다 —
+ *      그 판정은 `src/lib/products.ts` 에서 DB 결과 위에 덮어써진다.
  *
  * 출처: 후루츠패밀리 셀러 @cartiii 판매중 매물 (2026-08-20 수집).
  * SOLD 매물과 `(구매)` 구매희망 글은 제외했다.
  * 가격은 후루츠패밀리 게시가에 **세금 10% 가산** 후 100원 단위 반올림.
- *
- * DB 연결층이 생기면 이 파일의 `products` export 만 실제 조회로 바꾼다.
- * export 이름을 유지하면 화면 코드는 수정할 필요가 없다.
  *
  * 매입가(`sourcePrice`)와 원매물 링크(`sourceUrl`)는 여기 없다 — `Product` 는
  * `/shop` `/m/shop` 필터 컴포넌트("use client")에 통째로 props 로 넘어가 RSC
@@ -972,22 +983,9 @@ export const products: Product[] = [
   },
 ];
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return products.find((product) => product.slug === slug);
-}
-
 export function formatPrice(price: number): string {
   return `${price.toLocaleString("ko-KR")}원`;
 }
-
-/** 목록 노출용 — `sold` 은 `/shop` `/m/shop` 목록과 홈 코디 슬라이드에서 뺀다. 상세페이지는 별도로 살려둔다(`getProductBySlug`) */
-export const listedProducts = products.filter((product) => product.status !== "sold");
-
-/** 윗줄(상의) — 홈 코디 교차 슬라이드 */
-export const tops = listedProducts.filter((product) => product.kind === "top");
-
-/** 아랫줄(하의) — 홈 코디 교차 슬라이드 */
-export const bottoms = listedProducts.filter((product) => product.kind === "bottom");
 
 /**
  * 마퀴 한 묶음을 최소 개수까지 채운다.

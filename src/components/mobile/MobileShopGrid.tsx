@@ -42,7 +42,11 @@ export default function MobileShopGrid({ products }: { products: Product[] }) {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {products.length === 0 ? (
+        // 카탈로그 자체가 비었을 때. "이 분류에는 없다" 고 하면 다른 분류에는 있는 것처럼
+        // 읽혀서 문구를 나눈다.
+        <p className="font-kr text-sm text-fg/50">지금은 보여드릴 상품이 없습니다.</p>
+      ) : filtered.length === 0 ? (
         <p className="font-kr text-sm text-fg/50">이 분류에는 아직 등록된 상품이 없다.</p>
       ) : (
         <div className="flex flex-col items-center gap-6">
