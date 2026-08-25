@@ -9,10 +9,6 @@ const TRUST_ITEMS = [
 export default function MobileTrust() {
   return (
     <section className="border-b border-fg/10 bg-bg px-6 py-16">
-      <span className="mb-8 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-        #신뢰 요소
-      </span>
-
       <div className="flex flex-col gap-4">
         {TRUST_ITEMS.map((item) => (
           <div

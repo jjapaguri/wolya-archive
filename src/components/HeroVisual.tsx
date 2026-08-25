@@ -55,10 +55,6 @@ export default function HeroVisual() {
         </div>
       </div>
 
-      <div className="absolute top-5 right-5 bg-accent px-1.5 py-0.5 font-sans text-[9px] tracking-[0.1em] text-white">
-        DONGDAEMUN SELECTION NO. 074
-      </div>
-
       <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2.5">
         <span className="font-sans text-[8px] tracking-[0.3em] opacity-50">EXPLORE</span>
         <div className="h-[60px] w-px bg-gradient-to-b from-accent to-transparent" />

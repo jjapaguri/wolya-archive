@@ -21,10 +21,6 @@ export default function FaqPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase">
-          #FAQ
-        </span>
-
         <h1 className="word-keep-all mb-10 font-maruburi text-2xl leading-relaxed font-semibold lg:text-3xl">
           자주 묻는 질문
         </h1>

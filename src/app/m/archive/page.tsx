@@ -20,10 +20,6 @@ export default function MobileArchivePage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #Archive
-        </span>
-
         <h1 className="word-keep-all mb-6 font-kr text-xl font-medium">큐레이션 기록</h1>
 
         <p className="word-keep-all mb-8 font-kr text-[13px] leading-[1.8] font-light text-fg/70">

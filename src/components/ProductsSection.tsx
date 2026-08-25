@@ -109,10 +109,6 @@ export default function ProductsSection() {
 
   return (
     <section className="relative z-10 overflow-hidden border-t border-border bg-bg py-20 lg:py-[120px]">
-      <span className="mb-[60px] block px-6 font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase lg:px-20">
-        #아이템 소개
-      </span>
-
       <div
         className="outfit-marquee overflow-hidden"
         onPointerDown={handlePointerDown}

@@ -13,8 +13,6 @@ export default function MobileEditorial() {
         제안하는 셀렉트샵.
       </h2>
 
-      <div className="mb-6 h-px w-10 bg-accent" />
-
       <p className="word-keep-all mb-10 text-justify font-kr text-[13px] leading-[1.8] font-light text-fg/70">
         300여 개 브랜드, 7,000벌 이상의 시도 끝에 선별한 아이템들. 매주 브랜드를 뒤지고, 직접
         입고, 만져보고, 대부분은 버립니다. 수천 번의 거절 끝에 살아남은 것들만을 당신의 옷장에

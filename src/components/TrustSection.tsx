@@ -9,9 +9,6 @@ const trustItems = [
 export default function TrustSection() {
   return (
     <section className="relative z-10 border-t border-border bg-bg px-6 py-20 lg:px-20 lg:py-[100px]">
-      <span className="mb-[60px] block font-maruburi text-sm font-bold tracking-[0.2em] text-accent uppercase">
-        #신뢰 요소
-      </span>
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-[30px] min-[768px]:max-[1199.98px]:grid-cols-2 lg:grid-cols-5">
         {trustItems.map((item) => (
           <div

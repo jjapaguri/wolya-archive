@@ -25,10 +25,6 @@ export default function MobileContactPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #Contact
-        </span>
-
         <h1 className="word-keep-all mb-6 font-kr text-xl font-medium">문의하기</h1>
 
         <p className="word-keep-all mb-8 font-kr text-[13px] leading-[1.8] font-light text-fg/70">

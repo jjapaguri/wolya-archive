@@ -21,10 +21,6 @@ export default function MobileAboutPage() {
           ← 홈으로
         </Link>
 
-        <span className="mb-6 block font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-          #About
-        </span>
-
         <h1 className="word-keep-all mb-6 font-kr text-xl leading-relaxed font-medium">
           동대문에서 선별한 트렌디하고 힙한 아이템들을 감각적인 큐레이션으로
           합리적인 가격에 제안하는 셀렉트샵.

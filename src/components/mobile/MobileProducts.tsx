@@ -107,10 +107,6 @@ export default function MobileProducts() {
 
   return (
     <section className="overflow-hidden border-b border-fg/10 bg-bg py-16">
-      <span className="mb-8 block px-6 font-kr text-xs font-bold tracking-[0.2em] text-accent uppercase">
-        #아이템 소개
-      </span>
-
       <div className="overflow-hidden" onPointerDown={handlePointerDown} onClick={handleClick}>
         <div className="outfit-row-top-m flex w-max gap-1.5">
           {[...topRow, ...topRow].map((product, i) => (
