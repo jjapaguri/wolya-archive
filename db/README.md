@@ -36,6 +36,24 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 3 | 주문 내역 — carts, cart_items, orders, order_items | `003_orders` |
 | 4 | 결제·배송 — payments, shipments, order_status_histories | `004_payments` |
 | 5 | 리뷰·FAQ·반품/교환 — reviews, review_images, inquiries, inquiry_answers, faqs, **order_returns, order_return_items** | `005_cs` |
+| 6 | 상품 상세 표현 필드 (앱 `Product` 타입이 요구하는 nullable 컬럼) | `006_product_presentation` |
+| 7 | 최초 상품 3건 시드 (생성물) | `007_seed_initial_products` |
+| 8 | 노출 상태·카드 표기 — short_measure, seller_note, is_preorder | `008_product_listing_state` |
+| 9 | 원장 37건 전량 시드 (생성물, 007 위에 덧씌워도 안전) | `009_seed_all_products` |
+
+## 8·9단계 요점 (A1 — 화면이 DB 를 읽기 시작한 단계)
+
+- **노출 상태 세 갈래는 컬럼 하나로 표현하지 않는다.** 화면의 `available/preorder/sold` 는
+  이렇게 유도된다 (우선순위 순):
+  1. `products.is_preorder` → 예약주문. 사입 전이라 재고가 0이므로 재고보다 먼저 본다
+  2. `products.status='sold_out'` 이거나 재고 합계 0 → 판매완료
+  3. 나머지 → 보유 재고
+  덕분에 **불변규칙 3의 조건부 UPDATE 가 재고를 0으로 만드는 순간 코드 수정 없이 품절로 보인다.**
+- **`sold_out` 상품도 조회에 포함된다.** 목록에서만 빼고 상세페이지는 살려둔다(404 아님).
+  같은 옷이 1점뿐이라 재입고가 없고, 링크를 받은 사람에게 404 를 주는 것보다 낫다.
+- 시드 SQL 은 **생성물**이다. 손으로 고치지 말고 `scripts/gen_seed_sql.mjs` 를 고쳐 다시 뽑는다.
+- 009 는 007 위에 덧씌워도 안전하다 — 상품은 `ON CONFLICT DO NOTHING`, 새 컬럼은 `IS NULL` 인
+  행만 채운다. 사람이 DB 에서 직접 고친 값을 덮어쓰지 않는다.
 
 ## 스키마 1단계 요점
 

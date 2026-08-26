@@ -1,6 +1,6 @@
 # 현재 상황 (정본)
 
-**최종 갱신: 2026-08-23 (클라우드 세션)**
+**최종 갱신: 2026-08-25 (클라우드 세션)**
 
 **여기엔 기계가 추적하지 못하는 것만 적는다.** 다음은 여기 다시 적지 않는다:
 
@@ -14,8 +14,10 @@
 ## 한 줄 요약
 
 사이트(`/`+`/m`)와 24시간 자동화는 돌고 있다.
-**병목은 앱↔DB 연결층 미완결** — 읽기 계층(A0)은 붙었지만 화면은 아직 그걸 안 쓴다.
-상품은 여전히 `src/data/products.ts` 하드코딩.
+**앱↔DB 연결층(A1)은 코드상 끝났다** — 화면 여섯 라우트가 `src/lib/products.ts` 조회 계층을 쓴다.
+**남은 것은 사람이 하는 절차다: 운영 DB 에 마이그레이션 008·009 를 적용하는 것.**
+적용 전에는 조회가 0건이라 원장(`src/data/products.ts` 37건) 폴백으로 지금과 똑같이 보인다 —
+사이트가 비지는 않지만, 그동안 DB 는 아직 정본이 아니다.
 
 ## 지금 참인 것
 
@@ -28,12 +30,16 @@
   (가방·신발처럼 상·하의가 아닌 품목은 `null` — 이 구간에서 제외).
   **온라인 소싱 29건 등록(PR #13)으로 하의 9건이 들어와 이 구간이 데스크톱·모바일 둘 다 다시 나온다**
   (상의·하의 각각 `OUTFIT_ROW_MIN_ITEMS`=2건 이상 조건 충족, 코드 수정 없음)
-- 앱: `pg` 클라이언트는 이미 설치됨(2026-08-23 `cda2889` "A0 앱-DB 읽기 연결층" —
-  `src/lib/db.ts` 커넥션 풀 + `src/lib/product-queries.ts` SQL/매퍼 + 마이그레이션 006·007).
-  **그런데 `src/app`·`src/components` 어디서도 이 계층을 import 하지 않는다** — 실제 화면은
-  여전히 `src/data/products.ts` 하드코딩을 그대로 쓴다. 남은 절차(A1: `products.ts` 를 쿼리로
-  교체)는 `db/HANDOFF-앱-DB-연결.md`. 007 시드가 실제 운영 DB에 적용됐는지는 이 세션에서
-  DB 접속이 없어 확인 못 함(노트북에서 `psql` 로 확인 필요)
+- 앱↔DB: A0(읽기 계층)에 이어 **A1 완료** — `/` `/m` `/shop` `/m/shop` `/product/[slug]`
+  `/m/product/[slug]` 여섯 라우트가 `src/lib/products.ts` 를 거쳐 DB 를 읽는다.
+  상품 라우트는 전부 `force-dynamic`(요청마다 렌더) — 1점 1재고라 빌드 때 굳히면 안 된다.
+  `src/data/products.ts` 는 **화면의 정본이 아니라** 공유 타입 + DB 시드 원본 + 폴백 원장이 됐다.
+  마이그레이션 008(short_measure·seller_note·is_preorder) · 009(37건 전량 시드) 추가.
+  **007/008/009 가 실제 운영 DB에 적용됐는지는 이 세션에서 DB 접속이 없어 확인 못 함**
+  (노트북에서 `psql` 로 적용·확인 필요). 적용 전까지는 폴백이 화면을 지금 상태로 유지한다.
+- 품절 자동 반영의 빈틈: `source-watch.yml` 은 Actions 에서 돌아 운영 DB(localhost 전용)에
+  닿지 못한다. 그래서 판정은 여전히 원장 `status` 를 고쳐 커밋하고, 조회 계층이 DB 결과 위에
+  덮어써서 화면에 반영한다 — **배포를 거쳐야 반영된다.** 정리 항목은 `docs/BACKLOG.md`
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.
   PowerShell 에서 npm 불가 → CMD 또는 Git Bash
 
@@ -45,6 +51,7 @@
 - 재고의 실체는 `product_variants.stock_quantity` (사이즈·색상 단위)
 - DB collate `C.UTF-8` — 정렬 문제 시 쿼리에서 `COLLATE "ko-KR-x-icu"`, DB 재생성 안 함
 - ORM 안 쓴다. 특히 `prisma migrate` 금지 — 스키마 정본은 `db/migrations/`
+- 상품 화면은 정적 생성하지 않는다(`force-dynamic`). 재고 정확도가 캐시 이득보다 먼저다
 - 서버(2GB)에서 빌드하지 않는 방향으로 전환 예정 (백로그 P2, Actions 빌드로 이관)
 
 ## 사람 결정 대기
@@ -53,4 +60,5 @@
 |---|---|
 | 결제(PG) | 통신판매업 신고 접수, 확정 대기. `pg_provider='manual'` 무통장은 지금도 가능 |
 | 상품 사진 저장 위치 | 미결정. S3 분리 권장 (`product_images.url` 형태에 직결) |
-| `automation.json` 의 `writes` | 앱-DB 연결 후 사용자가 직접 켠다 |
+| `automation.json` 의 `writes` | 앱-DB 연결 후 사용자가 직접 켠다 (A1 코드는 끝났고, 008·009 적용 확인이 남았다) |
+| 브랜드 표기 통일 | 009 가 `Carhartt (칼하트)` → `Carhartt` 처럼 다수 표기로 합쳤다(5건 문구 변경). 반대로 하려면 `scripts/gen_seed_sql.mjs` 의 canonical 규칙을 뒤집는다 |

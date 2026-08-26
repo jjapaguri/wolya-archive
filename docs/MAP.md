@@ -34,10 +34,14 @@ src/app/                  데스크톱 라우트 — /shop /archive /about /cont
 src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/faq /m/product/[slug] /m/legal/[slug])
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
-src/data/                 ★ 유일한 공유 지점. products.ts 와 Product 타입
+src/data/                 ★ 공유 타입·상수. products.ts 의 배열은 **화면의 정본이 아니다**(A1 이후) —
+                          DB 시드 원본이자 DB 를 못 읽을 때의 폴백 원장이다.
+                          여기서 @/lib/db 를 import 하면 pg 가 브라우저 번들로 끌려가 빌드가 깨진다
                           product-sourcing.ts 는 매입가·원매물 링크 — 서버 전용,
                           클라이언트 컴포넌트에서 import 금지(원가 노출 방지)
-src/lib/                  라우트 컨벤션 파일(`opengraph-image.tsx` 등)이 공유하는 로직.
+src/lib/                  ★ 화면이 상품을 읽는 곳. products.ts(조회 계층, 서버 전용) +
+                          db.ts(pg 풀, 지연 생성) + product-queries.ts(SQL·매퍼).
+                          라우트 컨벤션 파일(`opengraph-image.tsx` 등)이 공유하는 로직도 여기.
                           `og-image.tsx` 는 데스크톱·모바일 opengraph-image 가 같이 쓰는 생성기.
                           `legal-content.ts` 는 이용약관/개인정보처리방침/교환·환불 규정 텍스트
                           (데스크톱·모바일 /legal/[slug] 페이지가 같이 씀, 법률 검토 전 초안)
@@ -47,8 +51,11 @@ src/lib/                  라우트 컨벤션 파일(`opengraph-image.tsx` 등)�
 - **새 라우트는 반드시 `/x` 와 `/m/x` 짝으로.** 한쪽만 만들면 휴대폰에서 404.
   상세 규칙과 예외 처리는 `docs/BACKLOG.md` "이중 라우트 규칙" 이 정본
 - 화면을 바꾸면 양쪽을 고친다. **데이터(`src/data/`)만 바꾸면 한 번으로 양쪽 반영**
-- DB 연결층이 생기면 `src/data/products.ts` 한 곳만 실제 조회로 바꾼다.
-  export 이름 유지 시 화면 컴포넌트 수정 불필요
+- **상품 라우트 6개(`/` `/m` `/shop` `/m/shop` `/product/[slug]` `/m/product/[slug]`)는
+  `force-dynamic` 이다.** 1점 1재고라 빌드 때 굳히면 품절이 다음 배포까지 안 붙는다.
+  상품을 쓰는 새 라우트를 만들면 같은 설정을 붙인다
+- "use client" 컴포넌트는 `@/lib/products` 를 import 하지 않는다. 서버 컴포넌트(페이지)가
+  `await` 해서 props 로 내려준다 — 안 그러면 `pg` 가 브라우저 번들에 들어가 빌드가 깨진다
 - 공용 컴포넌트는 `GrainOverlay.tsx` 하나뿐. 모바일 함정 목록은
   `.claude/agents/builder.md` "모바일 전용 레이아웃" 절
 

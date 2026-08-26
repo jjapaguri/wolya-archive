@@ -4,13 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import {
-  bottoms,
-  fillRow,
-  OUTFIT_ROW_MIN_ITEMS,
-  tops,
-  type Product,
-} from "@/data/products";
+import { fillRow, OUTFIT_ROW_MIN_ITEMS, type Product } from "@/data/products";
 
 /**
  * 홈 코디 교차 슬라이드 (모바일 `/m`).
@@ -19,6 +13,10 @@ import {
  * 방향으로 흐르며 가운데에서 만나는 조합이 계속 바뀐다. 값만 모바일용이다.
  * 모바일은 멈추지 않는다: 탭은 정지가 아니라 그 아이템 상세로 가는 동작이다.
  * 데스크톱과 같이 상의·하의가 `OUTFIT_ROW_MIN_ITEMS` 에 못 미치면 렌더하지 않는다.
+ *
+ * 상품은 서버 컴포넌트(`src/app/m/page.tsx`)가 DB 에서 읽어 props 로 내려준다.
+ * "use client" 라 조회 계층(`@/lib/products`)을 직접 import 할 수 없다 —
+ * 그렇게 하면 `pg` 가 브라우저 번들로 끌려 들어가 빌드가 깨진다.
  *
  * 모바일 컴포넌트는 데스크톱 것을 import 하지 않는다 (`docs/MAP.md`).
  */
@@ -29,9 +27,6 @@ const MIN_PER_ROW = 16;
 /** 흐르는 중 오탭 방지 — 이 이상 움직이거나(px) 이 시간을 넘기면(ms) 이동하지 않는다 */
 const MOVE_TOLERANCE = 12;
 const PRESS_TIMEOUT = 600;
-
-const topRow = fillRow(tops, MIN_PER_ROW);
-const bottomRow = fillRow(bottoms, MIN_PER_ROW);
 
 function OutfitCard({ product, clone }: { product: Product; clone: boolean }) {
   const href = `/m/product/${product.slug}`;
@@ -71,8 +66,16 @@ function OutfitCard({ product, clone }: { product: Product; clone: boolean }) {
   );
 }
 
-export default function MobileProducts() {
+export default function MobileProducts({
+  tops,
+  bottoms,
+}: {
+  tops: Product[];
+  bottoms: Product[];
+}) {
   const router = useRouter();
+  const topRow = fillRow(tops, MIN_PER_ROW);
+  const bottomRow = fillRow(bottoms, MIN_PER_ROW);
   const press = useRef<{ href: string; x: number; y: number; t: number } | null>(null);
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {

@@ -4,13 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import {
-  bottoms,
-  fillRow,
-  OUTFIT_ROW_MIN_ITEMS,
-  tops,
-  type Product,
-} from "@/data/products";
+import { fillRow, OUTFIT_ROW_MIN_ITEMS, type Product } from "@/data/products";
 
 /**
  * 홈 코디 교차 슬라이드 (데스크톱 `/`).
@@ -18,6 +12,10 @@ import {
  * 윗줄=상의, 아랫줄=하의가 서로 반대 방향으로 흐르면서 가운데에서 만나는 조합이
  * 계속 바뀌어 보이는 구간. 그래서 두 줄 간격을 4px 까지 붙이고, 글자는 이미지
  * 바깥쪽(상의는 위, 하의는 아래)으로 밀어 옷끼리 맞닿게 한다.
+ *
+ * 상품은 서버 컴포넌트(`src/app/page.tsx`)가 DB 에서 읽어 props 로 내려준다.
+ * 이 컴포넌트는 "use client" 라 조회 계층(`@/lib/products`)을 직접 import 할 수 없다 —
+ * 그렇게 하면 `pg` 가 브라우저 번들로 끌려 들어가 빌드가 깨진다.
  *
  * 카드에는 품명과 짧은 실측 한 줄만 둔다 — 원단·핏·추천 대상은 상세 페이지 몫.
  * 상의·하의 어느 한쪽이 `OUTFIT_ROW_MIN_ITEMS` 에 못 미치면 구간을 렌더하지 않는다.
@@ -30,9 +28,6 @@ const MIN_PER_ROW = 26;
 /** 흐르는 중 오탭 방지 — 이 이상 움직이거나(px) 이 시간을 넘기면(ms) 이동하지 않는다 */
 const MOVE_TOLERANCE = 12;
 const PRESS_TIMEOUT = 600;
-
-const topRow = fillRow(tops, MIN_PER_ROW);
-const bottomRow = fillRow(bottoms, MIN_PER_ROW);
 
 function OutfitCard({ product, clone }: { product: Product; clone: boolean }) {
   const href = `/product/${product.slug}`;
@@ -72,8 +67,16 @@ function OutfitCard({ product, clone }: { product: Product; clone: boolean }) {
   );
 }
 
-export default function ProductsSection() {
+export default function ProductsSection({
+  tops,
+  bottoms,
+}: {
+  tops: Product[];
+  bottoms: Product[];
+}) {
   const router = useRouter();
+  const topRow = fillRow(tops, MIN_PER_ROW);
+  const bottomRow = fillRow(bottoms, MIN_PER_ROW);
   const press = useRef<{ href: string; x: number; y: number; t: number } | null>(null);
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {

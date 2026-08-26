@@ -4,17 +4,23 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import GrainOverlay from "@/components/GrainOverlay";
 import SiteFooter from "@/components/SiteFooter";
-import { formatPrice, getProductBySlug, products } from "@/data/products";
+import { formatPrice, type Product } from "@/data/products";
+import { getProductBySlug } from "@/lib/products";
 
-export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
-}
+/**
+ * 상세페이지도 요청마다 렌더한다 — `generateStaticParams` 로 빌드 때 굳히지 않는다.
+ *
+ * 굳히면 (1) 팔린 옷이 다음 배포까지 "구매 문의" 를 계속 달고 있고,
+ * (2) DB 없는 CI 빌드에서는 slug 목록이 빈 배열이 돼 상세페이지가 통째로 사라진다.
+ * 이유는 `src/app/page.tsx` 상단 주석 참고.
+ */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
 
   return {
@@ -23,7 +29,7 @@ export async function generateMetadata({
   };
 }
 
-const detailRows = (product: NonNullable<ReturnType<typeof getProductBySlug>>) => [
+const detailRows = (product: Product) => [
   { label: "상태", value: product.condition },
   { label: "원단", value: product.fabric },
   { label: "핏", value: product.fit },
@@ -33,7 +39,7 @@ const detailRows = (product: NonNullable<ReturnType<typeof getProductBySlug>>) =
 
 export default async function ProductDetailPage({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   return (
