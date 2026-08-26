@@ -41,6 +41,7 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 8 | 노출 상태·카드 표기 — short_measure, seller_note, is_preorder | `008_product_listing_state` |
 | 9 | 원장 37건 전량 시드 (생성물, 007 위에 덧씌워도 안전) | `009_seed_all_products` |
 | 10 | 무통장 입금 주문 — 예약주문 스냅샷·동의 시각·입금자명/기한 | `010_manual_payment_orders` |
+| 11 | 로그인 — 비밀번호 해시 형식(scrypt) 확장, `user_sessions`, `auth_login_attempts` | `011_auth_sessions` |
 
 ## 8·9단계 요점 (A1 — 화면이 DB 를 읽기 시작한 단계)
 
@@ -83,6 +84,21 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 **`pg_transaction_id` 와 `paid_at` 을 요구한다** — 무통장은 PG 거래가 없으므로 입금 건
 식별자(은행 거래고유번호 등)를 그때 채운다. 상태를 바꾸는 트랜잭션에서는 먼저
 `SET LOCAL wolya.actor = 'admin'` 을 실행한다(이력에 남는다).
+
+## 11단계 요점 (로그인)
+
+- **`users_password_is_hash` CHECK 를 넓혔다.** 002 는 bcrypt/argon2 형식만 받았는데 앱은
+  Node 내장 `crypto` 의 scrypt 를 쓴다(새 라이브러리 설치 금지 제약). 저장 형식은
+  `$scrypt$N=16384,r=8,p=1$<salt>$<key>` 다. **평문을 막는다는 원래 목적은 그대로** —
+  여전히 `$알고리즘$` 으로 시작해야 통과한다. bcrypt/argon2 도 계속 받는다.
+- **세션 토큰 원문은 DB 에 없다.** `user_sessions.token_hash` 는 쿠키에 든 난수의 SHA-256 이다.
+  백업이 새도 그것만으로 남의 세션에 올라탈 수 없다.
+- **로그아웃은 행을 지우지 않고 `revoked_at` 을 찍는다.** 감사 흔적을 남기기 위해서다.
+  조회 조건에 `revoked_at IS NULL AND expires_at > now()` 가 항상 붙는다.
+- **`auth_login_attempts` 에 비밀번호는 평문도 해시도 들어가지 않는다.** 이메일과 IP 뿐이다.
+  속도 제한을 인메모리로 세지 않는 이유는 PM2 재시작·다중 프로세스에서 카운트가 어긋나서다.
+- 되돌리기(`011...down.sql`)는 scrypt 해시가 이미 저장된 계정이 있으면 **일부러 실패한다.**
+  조용히 넘어가면 앱이 로그인시킬 수 없는 계정이 DB 에 남는다.
 
 ## 스키마 1단계 요점
 

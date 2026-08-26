@@ -32,10 +32,14 @@
 src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts 아님 (Next 16에서 deprecated)
 src/app/                  데스크톱 라우트 — /shop /archive /about /contact /faq /product/[slug] /legal/[slug]
                           + 주문 /cart /checkout /order/[orderNo] /order-lookup
+                          + 회원 /login /signup /account
 src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/faq /m/product/[slug] /m/legal/[slug]
-                          /m/cart /m/checkout /m/order/[orderNo] /m/order-lookup)
+                          /m/cart /m/checkout /m/order/[orderNo] /m/order-lookup
+                          /m/login /m/signup /m/account)
 src/app/api/              라우트 핸들러 — **데스크톱·모바일이 같이 쓴다**(proxy matcher 가 /api 제외).
-                          /api/cart · /api/orders · /api/orders/lookup. 쿠키를 세우는 일은 전부 여기서 한다
+                          /api/cart · /api/orders · /api/orders/lookup ·
+                          /api/auth/social/[provider]/{start,callback}(소셜 로그인 왕복).
+                          쿠키를 세우는 일은 전부 여기서 한다 — **/m 짝을 만들지 않는다**
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
 src/data/                 ★ 공유 타입·상수. products.ts 의 배열은 **화면의 정본이 아니다**(A1 이후) —
@@ -43,6 +47,12 @@ src/data/                 ★ 공유 타입·상수. products.ts 의 배열은 *
                           여기서 @/lib/db 를 import 하면 pg 가 브라우저 번들로 끌려가 빌드가 깨진다
                           product-sourcing.ts 는 매입가·원매물 링크 — 서버 전용,
                           클라이언트 컴포넌트에서 import 금지(원가 노출 방지)
+src/lib/auth/             ★ 인증 전부. **서버 전용**(validation.ts·form-state.ts·types.ts 만 예외 —
+                          클라이언트에서 import 해도 되게 pg 를 안 끌어온다).
+                          password.ts(scrypt) · session.ts(쿠키+user_sessions) · queries.ts(SQL) ·
+                          rate-limit.ts · social.ts(제공자 설정, 키 없으면 버튼이 안 보인다) ·
+                          actions.ts(Server Action). 로그인은 **구매의 관문이 아니다** —
+                          여기 코드는 장바구니·주문·결제를 건드리지 않는다
 src/lib/                  ★ 화면이 상품을 읽는 곳. products.ts(조회 계층, 서버 전용) +
                           db.ts(pg 풀, 지연 생성) + product-queries.ts(SQL·매퍼).
                           라우트 컨벤션 파일(`opengraph-image.tsx` 등)이 공유하는 로직도 여기.
@@ -69,6 +79,9 @@ src/lib/payment/          ★ 결제 수단 추상화. `provider.ts`(계약·등
 - **주문 라우트 8개(`/cart` `/checkout` `/order/[orderNo]` `/order-lookup` + `/m/…`)도
   `force-dynamic` + `robots: noindex` 다.** 쿠키를 읽고 재고를 다시 보므로 캐시하면 안 되고,
   개인 상태가 담긴 화면이라 검색에 걸릴 이유가 없다
+- **회원 라우트 6개(`/login` `/signup` `/account` + `/m/…`)도 `force-dynamic` + `robots: noindex` 다.**
+  로그인 여부(쿠키)와 소셜 키(환경변수)를 요청 때 봐야 한다 — 빌드 때 굳히면 사람이 `.env.local` 에
+  키를 넣어도 다음 배포까지 버튼이 안 나온다
 - "use client" 컴포넌트는 `@/lib/products` 를 import 하지 않는다. 서버 컴포넌트(페이지)가
   `await` 해서 props 로 내려준다 — 안 그러면 `pg` 가 브라우저 번들에 들어가 빌드가 깨진다.
   주문 쪽도 같다: 폼·장바구니 화면은 `@/lib/orders/shared` (타입·검증만) 까지만 import 하고
