@@ -5,6 +5,9 @@ const navLinks = [
   { label: "Archive", href: "/archive" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+  // 로그인 여부와 무관하게 한 칸이다. 로그아웃 상태로 들어가면 /account 가 /login 으로 보낸다.
+  // 모바일 짝은 `src/components/mobile/MobileHeader.tsx` 의 NAV_ITEMS — 같이 고친다
+  { label: "Account", href: "/account" },
 ];
 
 export default function ContentPanel() {
@@ -18,7 +21,8 @@ export default function ContentPanel() {
           "linear-gradient(to bottom, var(--bg-soft), var(--bg))",
       }}
     >
-      <nav className="mb-[60px] flex justify-end gap-5 font-sans text-[11px] tracking-[0.1em] uppercase">
+      {/* 항목이 5개가 되면서 좁은 패널(350px)에서 한 줄에 안 들어간다 — 넘치지 않고 접히게 한다 */}
+      <nav className="mb-[60px] flex flex-wrap justify-end gap-x-5 gap-y-2 font-sans text-[11px] tracking-[0.1em] uppercase">
         {navLinks.map((link) => (
           <Link
             key={link.label}

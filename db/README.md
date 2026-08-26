@@ -40,6 +40,10 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 7 | 최초 상품 3건 시드 (생성물) | `007_seed_initial_products` |
 | 8 | 노출 상태·카드 표기 — short_measure, seller_note, is_preorder | `008_product_listing_state` |
 | 9 | 원장 37건 전량 시드 (생성물, 007 위에 덧씌워도 안전) | `009_seed_all_products` |
+| 11 | 로그인 — 비밀번호 해시 형식(scrypt) 확장, `user_sessions`, `auth_login_attempts` | `011_auth_sessions` |
+
+> **10번은 비워 두지 않았다** — 무통장 주문 PR(#30)이 `010_manual_payment_orders` 로 먼저 잡았다.
+> 그래서 로그인은 11번이다. 두 마이그레이션은 건드리는 테이블이 겹치지 않아 순서는 상관없다.
 
 ## 8·9단계 요점 (A1 — 화면이 DB 를 읽기 시작한 단계)
 
@@ -54,6 +58,21 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 - 시드 SQL 은 **생성물**이다. 손으로 고치지 말고 `scripts/gen_seed_sql.mjs` 를 고쳐 다시 뽑는다.
 - 009 는 007 위에 덧씌워도 안전하다 — 상품은 `ON CONFLICT DO NOTHING`, 새 컬럼은 `IS NULL` 인
   행만 채운다. 사람이 DB 에서 직접 고친 값을 덮어쓰지 않는다.
+
+## 11단계 요점 (로그인)
+
+- **`users_password_is_hash` CHECK 를 넓혔다.** 002 는 bcrypt/argon2 형식만 받았는데 앱은
+  Node 내장 `crypto` 의 scrypt 를 쓴다(새 라이브러리 설치 금지 제약). 저장 형식은
+  `$scrypt$N=16384,r=8,p=1$<salt>$<key>` 다. **평문을 막는다는 원래 목적은 그대로** —
+  여전히 `$알고리즘$` 으로 시작해야 통과한다. bcrypt/argon2 도 계속 받는다.
+- **세션 토큰 원문은 DB 에 없다.** `user_sessions.token_hash` 는 쿠키에 든 난수의 SHA-256 이다.
+  백업이 새도 그것만으로 남의 세션에 올라탈 수 없다.
+- **로그아웃은 행을 지우지 않고 `revoked_at` 을 찍는다.** 감사 흔적을 남기기 위해서다.
+  조회 조건에 `revoked_at IS NULL AND expires_at > now()` 가 항상 붙는다.
+- **`auth_login_attempts` 에 비밀번호는 평문도 해시도 들어가지 않는다.** 이메일과 IP 뿐이다.
+  속도 제한을 인메모리로 세지 않는 이유는 PM2 재시작·다중 프로세스에서 카운트가 어긋나서다.
+- 되돌리기(`010...down.sql`)는 scrypt 해시가 이미 저장된 계정이 있으면 **일부러 실패한다.**
+  조용히 넘어가면 앱이 로그인시킬 수 없는 계정이 DB 에 남는다.
 
 ## 스키마 1단계 요점
 

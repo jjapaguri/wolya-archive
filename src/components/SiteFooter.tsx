@@ -146,6 +146,14 @@ export default function SiteFooter() {
 
         <div className="mx-auto h-px max-w-[1200px] bg-border" />
 
+        {/* 회원 진입점 — 홈의 헤더 메뉴 말고는 들어갈 구멍이 없어서 여기에도 둔다.
+            모바일 짝은 `src/components/mobile/MobileFooter.tsx` — 같이 고친다 */}
+        <div className="mx-auto flex max-w-[1200px] justify-center pt-[30px] text-[11px] tracking-[0.1em] uppercase">
+          <Link href="/account" className="text-fg/50 transition-colors hover:text-accent">
+            로그인 · 내 정보
+          </Link>
+        </div>
+
         <div className="mx-auto flex max-w-[1200px] flex-wrap justify-center gap-5 py-[30px] text-[11px] tracking-[0.1em] uppercase">
           {legalLinks.map((link, i) => (
             <span key={link.href} className="flex items-center gap-5">

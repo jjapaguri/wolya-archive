@@ -8,6 +8,8 @@ const NAV_ITEMS = [
   { label: "Archive", href: "/m/archive" },
   { label: "About", href: "/m/about" },
   { label: "Contact", href: "/m/contact" },
+  // 데스크톱 짝은 `src/components/ContentPanel.tsx` 의 navLinks — 같이 고친다
+  { label: "Account", href: "/m/account" },
 ];
 
 export default function MobileHeader() {
