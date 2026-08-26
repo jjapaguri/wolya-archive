@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import GrainOverlay from "@/components/GrainOverlay";
 import SiteFooter from "@/components/SiteFooter";
+import AddToCartButton from "@/components/AddToCartButton";
 import { formatPrice, type Product } from "@/data/products";
 import { getProductBySlug } from "@/lib/products";
+import { listPurchaseOptions } from "@/lib/orders/cart";
 
 /**
  * 상세페이지도 요청마다 렌더한다 — `generateStaticParams` 로 빌드 때 굳히지 않는다.
@@ -41,6 +43,14 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+
+  /**
+   * 담기 옵션. `null` 이면 장바구니를 쓸 수 없는 상태(DB 미설정·원장 폴백·DB 에 없는 상품)이고,
+   * 그때 이 페이지는 **종전과 똑같이** 카카오톡 구매 문의만 그린다. 화면이 비지 않는다.
+   */
+  const options = product.status === "sold" ? null : await listPurchaseOptions(product.slug);
+  const purchaseOptions = options ?? [];
+  const canAddToCart = purchaseOptions.some((option) => option.orderable);
 
   return (
     <>
@@ -119,6 +129,16 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
                   </a>
                 )}
               </div>
+
+              {canAddToCart && (
+                <div className="mb-4">
+                  <AddToCartButton
+                    slug={product.slug}
+                    options={purchaseOptions}
+                    isPreorder={product.status === "preorder"}
+                  />
+                </div>
+              )}
               {product.status === "preorder" && (
                 <p className="word-keep-all border border-accent/40 bg-accent/[0.06] px-4 py-3 font-kr text-[12px] leading-[1.6] text-accent">
                   사입 확인 후 확정됩니다. 확보에 실패하면 3영업일 내 전액 환불됩니다.
