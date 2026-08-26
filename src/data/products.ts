@@ -769,7 +769,7 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 44.5 · 허벅지 34 · 총장 108",
     tags: "#칼하트 #카펜터 #더블니 #워크팬츠 #브라운",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 28,
