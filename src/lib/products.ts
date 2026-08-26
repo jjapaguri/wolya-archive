@@ -107,20 +107,37 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 /**
+ * 판매중(available·preorder) 을 앞, 판매완료(sold) 를 뒤로 보내는 안정 정렬.
+ * 각 그룹 안에서는 원래 순서(아카이브 번호 순) 를 그대로 유지한다.
+ */
+function sortSoldLast(products: Product[]): Product[] {
+  return [
+    ...products.filter((p) => p.status !== "sold"),
+    ...products.filter((p) => p.status === "sold"),
+  ];
+}
+
+/**
  * `/archive` `/m/archive` 목록 — 주인장 개인 소장 중고·1점 한정.
  * 채널이 지정되지 않은 상품은 archive 로 본다(`Product.channel` 주석).
+ * 판매완료 상품도 목록에서 감추지 않고 뒤로 보내 SOLD OUT 으로 보여준다
+ * (카드 표시는 `ProductCard`/`MobileProductCard`). 목록에서 완전히 빼는 건
+ * `listListedProducts` 를 쓰는 홈 코디 슬라이드뿐이다.
  */
 export async function listArchiveProducts(): Promise<Product[]> {
-  return (await listListedProducts()).filter((p) => productChannel(p) === "archive");
+  const all = await listProducts();
+  return sortSoldLast(all.filter((p) => productChannel(p) === "archive"));
 }
 
 /**
  * `/shop` `/m/shop` 목록 — 도매 소싱한 재입고 가능한 신상품.
  * 지금은 그런 상품이 아직 없어 0건이고, 그때는 두 페이지가 "준비 중" 안내를 보여준다.
  * `channel: "shop"` 상품이 등록되면 코드 수정 없이 목록이 나온다.
+ * 판매완료 상품도 (등록되면) `listArchiveProducts` 와 같은 규칙으로 뒤로 보내 노출한다.
  */
 export async function listShopProducts(): Promise<Product[]> {
-  return (await listListedProducts()).filter((p) => productChannel(p) === "shop");
+  const all = await listProducts();
+  return sortSoldLast(all.filter((p) => productChannel(p) === "shop"));
 }
 
 /**
