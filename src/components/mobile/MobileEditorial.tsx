@@ -32,8 +32,9 @@ export default function MobileEditorial() {
         ))}
       </div>
 
+      {/* 실물이 있는 쪽으로 보낸다 — Shop 은 신상품 준비 중 안내만 있는 상태다 */}
       <Link
-        href="/m/shop"
+        href="/m/archive"
         className="mt-10 flex w-full items-center justify-between border border-fg bg-transparent p-4 font-sans text-xs tracking-[0.2em] text-fg uppercase transition-colors active:bg-fg active:text-bg"
       >
         <span>VIEW COLLECTIONS</span>

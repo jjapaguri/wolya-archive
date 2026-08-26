@@ -36,7 +36,11 @@ import {
   mapRow,
   type ProductRow,
 } from "@/lib/product-queries";
-import { products as ledgerProducts, type Product } from "@/data/products";
+import {
+  products as ledgerProducts,
+  productChannel,
+  type Product,
+} from "@/data/products";
 
 export { SQL_PRODUCT_BY_SLUG, SQL_PRODUCTS_BY_CATEGORY };
 
@@ -102,7 +106,30 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return (await listProducts()).find((p) => p.slug === slug) ?? null;
 }
 
-/** 홈 코디 교차 슬라이드용 두 줄. 윗줄=상의, 아랫줄=하의. */
+/**
+ * `/archive` `/m/archive` 목록 — 주인장 개인 소장 중고·1점 한정.
+ * 채널이 지정되지 않은 상품은 archive 로 본다(`Product.channel` 주석).
+ */
+export async function listArchiveProducts(): Promise<Product[]> {
+  return (await listListedProducts()).filter((p) => productChannel(p) === "archive");
+}
+
+/**
+ * `/shop` `/m/shop` 목록 — 도매 소싱한 재입고 가능한 신상품.
+ * 지금은 그런 상품이 아직 없어 0건이고, 그때는 두 페이지가 "준비 중" 안내를 보여준다.
+ * `channel: "shop"` 상품이 등록되면 코드 수정 없이 목록이 나온다.
+ */
+export async function listShopProducts(): Promise<Product[]> {
+  return (await listListedProducts()).filter((p) => productChannel(p) === "shop");
+}
+
+/**
+ * 홈 코디 교차 슬라이드용 두 줄. 윗줄=상의, 아랫줄=하의.
+ *
+ * **채널로 거르지 않는다** — 홈은 "지금 보여줄 수 있는 옷" 을 흘리는 자리라
+ * 아카이브든 신상품이든 상의/하의면 태운다. 지금은 전량이 아카이브라 종전과 같고,
+ * 신상품이 들어오면 자동으로 함께 흐른다. 한쪽만 흘리고 싶으면 여기서 한 줄 거르면 된다.
+ */
 export async function listOutfitRows(): Promise<{ tops: Product[]; bottoms: Product[] }> {
   const listed = await listListedProducts();
   return {

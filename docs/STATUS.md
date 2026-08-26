@@ -43,6 +43,12 @@
 - 노트북: 레포 `C:\Users\chunp\wolya-archive`, 빌드·SSH 가능. `ssh wolya` 별칭 등록됨.
   PowerShell 에서 npm 불가 → CMD 또는 Git Bash
 
+- **Shop 과 Archive 는 역할이 다르다.** `/archive` `/m/archive` = 주인장 개인 소장
+  중고·1점 한정(현재 카탈로그 전량), `/shop` `/m/shop` = 도매 소싱한 재입고 가능한
+  신상품(아직 0건이라 "준비 중" 안내만 뜬다). 구분은 `Product.channel` — 생략하면
+  `archive`. 신상품을 넣는 쪽이 `channel: "shop"` 을 명시하면 코드 수정 없이 Shop 에 뜬다.
+  홈 코디 슬라이드는 채널로 거르지 않는다(양쪽 다 흐른다)
+
 ## 확정된 전제 (뒤집으려면 사용자 승인)
 
 - **비회원 주문 허용** — 장바구니 `session_key`, 주문조회 주문번호+휴대폰
