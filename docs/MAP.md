@@ -31,7 +31,11 @@
 ```
 src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts 아님 (Next 16에서 deprecated)
 src/app/                  데스크톱 라우트 — /shop /archive /about /contact /faq /product/[slug] /legal/[slug]
-src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/faq /m/product/[slug] /m/legal/[slug])
+                          + 주문 /cart /checkout /order/[orderNo] /order-lookup
+src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/faq /m/product/[slug] /m/legal/[slug]
+                          /m/cart /m/checkout /m/order/[orderNo] /m/order-lookup)
+src/app/api/              라우트 핸들러 — **데스크톱·모바일이 같이 쓴다**(proxy matcher 가 /api 제외).
+                          /api/cart · /api/orders · /api/orders/lookup. 쿠키를 세우는 일은 전부 여기서 한다
 src/components/           데스크톱 컴포넌트
 src/components/mobile/    모바일 컴포넌트 — 데스크톱 것을 import 하지 않는다
 src/data/                 ★ 공유 타입·상수. products.ts 의 배열은 **화면의 정본이 아니다**(A1 이후) —
@@ -46,6 +50,14 @@ src/lib/                  ★ 화면이 상품을 읽는 곳. products.ts(조회
                           `legal-content.ts` 는 이용약관/개인정보처리방침/교환·환불 규정 텍스트
                           (데스크톱·모바일 /legal/[slug] 페이지가 같이 씀, 법률 검토 전 초안)
                           `faq-content.ts` 는 /faq, /m/faq 전체 질문/답변 목록(홈 티저보다 넓음)
+src/lib/orders/           ★ 장바구니·주문. `shared.ts`(타입·검증·금액 정책 — pg 없음, 클라이언트도 씀)
+                          + `queries.ts`(SQL, pg 없음) + `cart.ts`·`checkout.ts`·`lookup.ts`(서버 전용)
+                          + `session.ts`(비회원 세션키 쿠키) + `order-no.ts`(주문번호 발급).
+                          **금액 재계산·재고 차감(조건부 UPDATE)·예약주문 자리 잠금은 전부 `checkout.ts`
+                          의 한 트랜잭션 안에 있다** — 여기 말고 다른 곳에서 주문을 만들지 않는다
+src/lib/payment/          ★ 결제 수단 추상화. `provider.ts`(계약·등록소) + `manual.ts`(무통장, 첫 구현체).
+                          PG 가 붙으면 여기 파일 하나 추가 + PROVIDERS 등록이고 주문 코드는 안 고친다.
+                          입금 계좌는 코드에 없다 — `WOLYA_BANK_NAME`/`_ACCOUNT`/`_HOLDER` 환경변수
 ```
 
 - **새 라우트는 반드시 `/x` 와 `/m/x` 짝으로.** 한쪽만 만들면 휴대폰에서 404.
@@ -54,8 +66,13 @@ src/lib/                  ★ 화면이 상품을 읽는 곳. products.ts(조회
 - **상품 라우트 6개(`/` `/m` `/shop` `/m/shop` `/product/[slug]` `/m/product/[slug]`)는
   `force-dynamic` 이다.** 1점 1재고라 빌드 때 굳히면 품절이 다음 배포까지 안 붙는다.
   상품을 쓰는 새 라우트를 만들면 같은 설정을 붙인다
+- **주문 라우트 8개(`/cart` `/checkout` `/order/[orderNo]` `/order-lookup` + `/m/…`)도
+  `force-dynamic` + `robots: noindex` 다.** 쿠키를 읽고 재고를 다시 보므로 캐시하면 안 되고,
+  개인 상태가 담긴 화면이라 검색에 걸릴 이유가 없다
 - "use client" 컴포넌트는 `@/lib/products` 를 import 하지 않는다. 서버 컴포넌트(페이지)가
-  `await` 해서 props 로 내려준다 — 안 그러면 `pg` 가 브라우저 번들에 들어가 빌드가 깨진다
+  `await` 해서 props 로 내려준다 — 안 그러면 `pg` 가 브라우저 번들에 들어가 빌드가 깨진다.
+  주문 쪽도 같다: 폼·장바구니 화면은 `@/lib/orders/shared` (타입·검증만) 까지만 import 하고
+  `cart.ts`/`checkout.ts`/`lookup.ts` 는 서버 컴포넌트와 `src/app/api/` 만 쓴다
 - 공용 컴포넌트는 `GrainOverlay.tsx` 하나뿐. 모바일 함정 목록은
   `.claude/agents/builder.md` "모바일 전용 레이아웃" 절
 

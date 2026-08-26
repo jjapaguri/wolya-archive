@@ -40,6 +40,7 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 | 7 | 최초 상품 3건 시드 (생성물) | `007_seed_initial_products` |
 | 8 | 노출 상태·카드 표기 — short_measure, seller_note, is_preorder | `008_product_listing_state` |
 | 9 | 원장 37건 전량 시드 (생성물, 007 위에 덧씌워도 안전) | `009_seed_all_products` |
+| 10 | 무통장 입금 주문 — 예약주문 스냅샷·동의 시각·입금자명/기한 | `010_manual_payment_orders` |
 
 ## 8·9단계 요점 (A1 — 화면이 DB 를 읽기 시작한 단계)
 
@@ -54,6 +55,34 @@ psql "$DATABASE_URL" -f db/migrations/001_products.verify.sql
 - 시드 SQL 은 **생성물**이다. 손으로 고치지 말고 `scripts/gen_seed_sql.mjs` 를 고쳐 다시 뽑는다.
 - 009 는 007 위에 덧씌워도 안전하다 — 상품은 `ON CONFLICT DO NOTHING`, 새 컬럼은 `IS NULL` 인
   행만 채운다. 사람이 DB 에서 직접 고친 값을 덮어쓰지 않는다.
+
+## 10단계 요점 (B — 무통장 입금 주문을 실제로 받는 단계)
+
+003·004 테이블은 이미 있었고 **컬럼 5개와 부분 인덱스 2개만 더한다.** 전부
+`ADD COLUMN IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` 라 재실행해도 안전하다.
+
+- **`order_items.is_preorder`** — 재고를 안 깎은 줄을 표시한다. 지금 카탈로그는 무재고
+  (선주문 후 사입)라 예약주문 상품의 `stock_quantity` 가 0이다. 재고 0을 품절로 막으면
+  팔 수 있는 물건이 3건만 남으므로, **예약주문 항목은 불변규칙 3의 조건부 UPDATE 를 태우지
+  않는다.** 그 사실이 주문서에 남아야 운영이 사입 대상을 고른다.
+  `products.is_preorder` 를 조인해 보면 안 된다 — 주문서는 스냅샷이고 `product_id` 는
+  상품이 지워지면 NULL 이 된다.
+  단벌이라 중복 예약은 앱이 `pg_advisory_xact_lock` 으로 막는다
+  (`src/lib/orders/checkout.ts`). 취소·환불된 주문은 예약 자리를 자동으로 놓아준다.
+- **`orders.terms_agreed_at` / `privacy_agreed_at`** — 비회원 주문에는 `users` 행이 없어
+  동의 증빙을 남길 자리가 없었다. **boolean 으로 바꾸지 말 것** (불변규칙 7, 002 와 같은 규칙).
+- **`payments.deposit_name` / `deposit_due_at`** — 입금자명은 주문자명과 다른 경우가 대부분이라
+  대사에 필요하고, 기한 초과 미입금 조회는 `idx_payments_deposit_due` 가 받친다.
+  `raw_response` 에 넣지 않은 이유: 그 컬럼은 PG 응답 원본 자리이고, 운영이 매일 조회하는
+  값이라 인덱스 가능한 컬럼이어야 한다.
+
+### 무통장 주문의 상태 흐름 (DB 가 강제하는 것)
+
+주문은 `orders.status='pending'` + `payments.status='ready'` 로 시작한다.
+사람이 입금을 확인해 `paid` 로 올릴 때 004 의 `payments_paid_needs_proof` CHECK 가
+**`pg_transaction_id` 와 `paid_at` 을 요구한다** — 무통장은 PG 거래가 없으므로 입금 건
+식별자(은행 거래고유번호 등)를 그때 채운다. 상태를 바꾸는 트랜잭션에서는 먼저
+`SET LOCAL wolya.actor = 'admin'` 을 실행한다(이력에 남는다).
 
 ## 스키마 1단계 요점
 
