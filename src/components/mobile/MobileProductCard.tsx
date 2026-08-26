@@ -18,7 +18,11 @@ export default function MobileProductCard({ product }: { product: Product }) {
           alt={product.name}
           fill
           sizes="280px"
-          className="object-cover [filter:grayscale(30%)_contrast(1.1)_brightness(0.85)]"
+          className={
+            product.status === "sold"
+              ? "object-cover [filter:grayscale(90%)_contrast(1.05)_brightness(0.55)]"
+              : "object-cover [filter:grayscale(30%)_contrast(1.1)_brightness(0.85)]"
+          }
         />
       </div>
 
@@ -28,6 +32,11 @@ export default function MobileProductCard({ product }: { product: Product }) {
           {product.status === "preorder" && (
             <span className="border border-accent px-1.5 py-0.5 text-[8px] tracking-[0.1em] text-accent">
               예약주문
+            </span>
+          )}
+          {product.status === "sold" && (
+            <span className="border border-accent px-1.5 py-0.5 text-[8px] tracking-[0.1em] text-accent">
+              SOLD OUT
             </span>
           )}
         </span>

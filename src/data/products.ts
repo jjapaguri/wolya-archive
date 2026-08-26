@@ -103,8 +103,10 @@ export type Product = {
   /**
    * available: 이미 매입해 보유 중. preorder: 사입 확인 전 예약주문.
    * sold: 원본 매물 생존 체크(`scripts/check-source-availability.mjs`)가 원본이
-   * 죽었다고 판정해 내림 — `/shop` `/m/shop` 목록·홈 코디 슬라이드에서 빠지지만
-   * 상세페이지는 살아있다(판매완료 표시로 남김, 404 아님). 되돌리기는 사람이 한다.
+   * 죽었다고 판정해 내림 — `/archive` `/m/archive`, `/shop` `/m/shop` 목록에서는
+   * 감춰지지 않고 판매중 상품 뒤로 밀려나 SOLD OUT 으로 표시된다. 홈 코디 슬라이드
+   * (`listOutfitRows`)에서만 빠진다. 상세페이지는 항상 살아있다(판매완료 표시, 404 아님).
+   * 되돌리기는 사람이 한다.
    */
   status: "available" | "preorder" | "sold";
   /**

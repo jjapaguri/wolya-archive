@@ -166,6 +166,39 @@ _(현재 없음)_
 
 ## 완료
 
+### 2026-08-26
+
+- [x] `auto` **솔드아웃 상품을 목록에서 감추지 말고 SOLD OUT 으로 표시 (사람이 직접 지정)**
+  지시문은 "지금 `/shop`·`/m/shop` 은 `listListedProducts()` 를 써서 판매완료 상품이
+  통째로 빠진다" 는 전제였는데, 착수해 보니 바로 전 커밋(#28, Shop↔Archive 역할 맞바꿈)으로
+  이미 사실이 아니었다 — `/shop``/m/shop` 은 `listShopProducts()`(채널 `shop` 필터)를 쓰고
+  지금 실물 재고 37건은 전부 채널 `archive` 라 `/archive``/m/archive` 의 `listArchiveProducts()`
+  가 실제로 sold 를 숨기고 있었다(`listShopProducts` 는 이미 존재하는 이름이라 그대로 새로
+  만들면 기존 채널 필터 함수와 충돌하기도 했다). 그래서 지시문의 실제 의도(판매완료를
+  목록에서 감추지 말 것)를 두 목록 함수 모두에 반영했다 — `listArchiveProducts`·
+  `listShopProducts` 를 `listListedProducts`(sold 제외) 대신 `listProducts`(전체) 기반으로
+  바꾸고, 새 `sortSoldLast()` 로 판매중(available·preorder)을 앞, sold 를 뒤로 안정
+  정렬했다(각 그룹 내부 순서 유지). 홈 코디 슬라이드(`listOutfitRows`, `/` `/m`)는 여전히
+  `listListedProducts` 를 쓰므로 sold 는 그대로 0건이다 — 지시문의 "첫인상 영역엔 솔드아웃을
+  넣지 않는다" 는 그대로 지켜졌다.
+  `ProductCard.tsx`(데스크톱)·`MobileProductCard.tsx`(모바일) 양쪽에 기존 예약주문 배지와
+  같은 자리·같은 톤(`border-accent`/`text-accent`)으로 "SOLD OUT" 배지를 추가하고, 상품
+  이미지 필터를 `grayscale(90%)_contrast(1.05)_brightness(0.55)`(기존 판매중 상품은
+  `grayscale(30%)_contrast(1.1)_brightness(0.85)` 그대로)로 갈아끼워 확실히 죽어 보이게 했다.
+  카드 링크는 그대로 살려뒀다 — 인스타에 올라간 링크가 죽지 않는다.
+  필터 탭은 새로 만들지 않았다(기존 상의/하의/액세서리/신발 4개 그대로, `전체` 포함 grep 확인).
+  상세페이지(`/product/[slug]``/m/product/[slug]`)는 손대지 않았다.
+  `db/migrations/`·`ops/`·`.github/workflows/`·`AGENTS.md`·`next.config.ts`·결제/주문 코드·
+  `package.json` 의존성 어느 것도 건드리지 않았다.
+  `npm run lint && npm run build` 통과(기존 `DesktopViewLink.tsx` 무관 warning 1개만 남음),
+  여섯 상품 라우트 전부 `ƒ (Dynamic)` 유지 확인.
+  `npm run start` 로컬 프로덕션 서버에서 확인한 것: `/archive`·`/m/archive` 양쪽 다 상품 링크
+  37개(sold 7건 포함 전량)·"SOLD OUT" 배지 7개·grayscale(90%) 필터 7개 등장, sold 7건이 모두
+  판매중 30건 뒤로 정렬됨(스크립트로 순서 검증), `/shop`·`/m/shop` 은 지금도 채널 `shop`
+  상품이 0건이라 "새 재고 준비 중" 안내만 그대로(변경으로 인한 부작용 없음 확인), 홈 `/`·`/m`
+  에는 "SOLD OUT" 문자열 0건, sold 상품 상세페이지(`levis-504-selvedge-32`) curl 200 유지.
+  실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
+
 ### 2026-08-25
 
 - [x] `review` **앱 ↔ DB 연결층 A1 — 화면이 DB 를 읽는다 (클라우드 세션, 사람이 직접 지정)**
