@@ -117,6 +117,12 @@
   > 스스로 표시돼 있다. 같은 작업을 중복하지 않으려 건너뛰었다. 이게 병합돼도 로그인 메뉴는
   > 여전히 순서상 비회원 주문·결제가 먼저라 이 항목 자체는 안 풀린다. P2 "서버에서 빌드 안 함"
   > 도 `.github/workflows/` 금지 경로 그대로. 실행 가능한 항목 없어 PR 없이 종료.
+  > 2026-08-26 dev-loop: 재확인, 변동 없음. 열린 PR `#27`(`claude/a1-app-db-connection-e70l9y`,
+  > A1 앱↔DB 연결층) 그대로 열려 있음 — 이 항목이 다루는 바로 그 작업이라 건너뛰었다.
+  > `package.json` dependencies 는 `next`/`pg`/`react`/`react-dom` 그대로, `src/app`·`src/components`
+  > 의 `product-queries`/`lib/db` import 는 여전히 0건(PR #27 이 아직 main 에 병합되지 않았다는 뜻),
+  > `.github/workflows/` 에 `DATABASE_URL` 도 여전히 0건. P2 "서버에서 빌드 안 함" 도
+  > `.github/workflows/` 금지 경로 그대로. 실행 가능한 항목 없어 PR 없이 종료.
   `users` / `user_social_accounts` / `user_addresses` 테이블은 이미 있다(002). 이메일 + 소셜(카카오·네이버·구글) 설계다.
   **그런데 지금 만들면 버려질 코드가 된다.** 앱이 DB 를 전혀 안 쓰고 있어서
   (`package.json` 에 PostgreSQL 클라이언트조차 없다) 인증만 먼저 붙일 수가 없다.
