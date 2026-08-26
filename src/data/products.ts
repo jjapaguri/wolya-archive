@@ -42,6 +42,19 @@ export const CATEGORIES: ProductCategory[] = ["top", "bottom", "accessory", "sho
 export type ProductKind = "top" | "bottom";
 
 /**
+ * 진열 채널 — Shop 과 Archive 는 역할이 다르다.
+ *
+ * `archive` 는 주인장 개인 소장 중고(대부분 1점 한정), `shop` 은 도매 소싱한
+ * 재입고 가능한 신상품이다. 값이 없는 상품은 `archive` 로 본다 (`Product.channel` 주석).
+ */
+export type ProductChannel = "archive" | "shop";
+
+/** 채널이 지정되지 않은 상품의 기본값. 판단이 한 곳에만 있도록 함수로 둔다 */
+export function productChannel(product: Product): ProductChannel {
+  return product.channel ?? "archive";
+}
+
+/**
  * 코디 교차 슬라이드를 렌더하는 최소 개수 (윗줄·아랫줄 각각).
  *
  * 이 구간의 의미는 "지나가는 동안 상의×하의 조합이 계속 바뀐다" 는 것이다.
@@ -94,6 +107,18 @@ export type Product = {
    * 상세페이지는 살아있다(판매완료 표시로 남김, 404 아님). 되돌리기는 사람이 한다.
    */
   status: "available" | "preorder" | "sold";
+  /**
+   * 어느 페이지에 진열할지.
+   *
+   * - `"archive"`(기본) — 주인장 개인 소장 중고·1점 한정. `/archive` `/m/archive`
+   * - `"shop"` — 도매 소싱해 들여오는 재입고 가능한 신상품. `/shop` `/m/shop`
+   *
+   * **생략하면 `"archive"` 다.** 지금 원장 전량이 개인 소장분이라 기본값이 곧 현실이고,
+   * 필수로 만들면 기존 항목 전부와 DB 매퍼를 같이 고쳐야 해서 선택 필드로 뒀다.
+   * 신상품을 등록하는 쪽이 `channel: "shop"` 을 명시한다.
+   * (DB 에 컬럼이 생기면 `src/lib/product-queries.ts` 의 `mapRow` 에서 채운다.)
+   */
+  channel?: ProductChannel;
   /** 판매자 고지(하자·할인가 변동 등). 있으면 상세페이지 하단에 노출 */
   note?: string;
 };

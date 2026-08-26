@@ -58,8 +58,9 @@ export default function ContentPanel() {
           </div>
         </div>
 
+        {/* 실물이 있는 쪽으로 보낸다 — Shop 은 신상품 준비 중 안내만 있는 상태다 */}
         <Link
-          href="/shop"
+          href="/archive"
           className="mt-10 flex w-full items-center justify-between border border-fg px-[30px] py-[15px] font-sans text-xs tracking-[0.2em] uppercase text-fg transition-all duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] hover:bg-fg hover:text-bg"
         >
           <span>View Collections</span>
