@@ -5,7 +5,6 @@ import MobileEditorial from "@/components/mobile/MobileEditorial";
 import MobileWhySection from "@/components/mobile/MobileWhySection";
 import MobileProducts from "@/components/mobile/MobileProducts";
 import MobileTrust from "@/components/mobile/MobileTrust";
-import MobileSocialProof from "@/components/mobile/MobileSocialProof";
 import MobileFaq from "@/components/mobile/MobileFaq";
 import MobileFooter from "@/components/mobile/MobileFooter";
 import { listOutfitRows } from "@/lib/products";
@@ -38,7 +37,6 @@ export default async function MobileHome() {
         <MobileWhySection />
         <MobileProducts tops={tops} bottoms={bottoms} />
         <MobileTrust />
-        <MobileSocialProof />
         <MobileFaq />
       </main>
 
