@@ -3,7 +3,6 @@ import HeroSection from "@/components/HeroSection";
 import EditorialSection from "@/components/EditorialSection";
 import ProductsSection from "@/components/ProductsSection";
 import TrustSection from "@/components/TrustSection";
-import SocialProofSection from "@/components/SocialProofSection";
 import FaqSection from "@/components/FaqSection";
 import SiteFooter from "@/components/SiteFooter";
 import { listOutfitRows } from "@/lib/products";
@@ -32,7 +31,6 @@ export default async function Home() {
       <EditorialSection />
       <ProductsSection tops={tops} bottoms={bottoms} />
       <TrustSection />
-      <SocialProofSection />
       <FaqSection />
       <SiteFooter />
     </>
