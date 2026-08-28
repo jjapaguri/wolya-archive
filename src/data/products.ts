@@ -345,7 +345,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 59 · 가슴 69 · 총장 75",
     tags: "#파타고니아 #신칠라 #플리스 #오버핏 #A급",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 10,
@@ -416,7 +416,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 48 · 가슴 51 · 총장 60",
     tags: "#쇼트 #퍼펙토 #618 #라이더자켓 #90s",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 13,
