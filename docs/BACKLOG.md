@@ -112,12 +112,6 @@
   주문 상태를 `cancelled` 로 두면 예약 자리는 자동으로 풀린다(`SQL_PREORDER_ALREADY_RESERVED`
   가 `cancelled`/`refunded` 를 제외한다). 관리자 화면을 만들지, psql 절차로 버틸지가 먼저다.
 
-- [ ] `review` **전역 내비게이션에 장바구니·주문조회 진입점**
-  지금 `/cart` 는 상세페이지에서 담은 뒤에 뜨는 링크와 직접 URL 로만 닿고, `/order-lookup` 은
-  장바구니·주문 완료 화면에서만 닿는다. 헤더·푸터(`SiteFooter.tsx`, `MobileHeader.tsx`,
-  `MobileFooter.tsx`)에 진입점이 필요하다. **이번 주문 작업에서 일부러 건드리지 않았다** —
-  같은 파일을 로그인 메뉴 작업이 만지고 있어 충돌이 뻔했다. 로그인 메뉴가 정해진 뒤에 같이 넣는다.
-
 - [ ] `review` **배송비 정책 확정 (지금은 정액 3,500원)**
   `src/lib/orders/shared.ts` 의 `SHIPPING_FEE` 상수 하나다. 무료배송 기준선은 프로모션 결정이라
   (AGENTS.md 4절) 자동화가 넣지 않았다. 기준선을 두려면 `calcShippingFee()` 한 곳만 고치면
@@ -149,6 +143,34 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-29
+
+- [x] `review` **전역 내비게이션에 장바구니·주문조회 진입점**
+  `## 할 일` 큐 위쪽 항목들(비밀번호 재설정·이메일 변경·A2·품절 DB 반영·입금확인 절차)은
+  전부 사람 결정(메일 발송 채널, 운영 DB 확인, `ops/` 설계)이 선행돼야 해 오늘도 구조적으로
+  착수 불가능했다. 이 항목은 원문에 "로그인 메뉴가 정해진 뒤에 같이 넣는다" 는 선행 조건이
+  있었는데 로그인 메뉴(#31)가 이미 병합돼 있어 이번에 착수했다. PR #34(장바구니 회원 병합)가
+  이미 그 항목을 다루고 있어 건너뛰었다.
+  `/cart``/order-lookup` 은 지금까지 상세페이지에서 담은 뒤 뜨는 링크나 직접 URL 로만 닿았다.
+  원문이 지목한 파일 세 개(`SiteFooter.tsx`, `MobileHeader.tsx`, `MobileFooter.tsx`) 그대로
+  건드렸다 — 데스크톱 헤더(`ContentPanel.tsx`)는 원문이 지목하지 않았고, 이미 5개 항목이 든
+  좁은 슬라이드 패널이라 넣지 않고 데스크톱은 푸터로만 진입점을 뒀다. 모바일은 전체 화면
+  메뉴라 여유가 있어 헤더(`MobileHeader.tsx` 의 `NAV_ITEMS`)에도 Cart·Order Lookup 을
+  추가하고 푸터에도 같이 넣었다.
+  - `SiteFooter.tsx`: "로그인 · 내 정보" 링크 줄에 "장바구니"·"주문조회" 를 파이프로 이어 붙임
+  - `MobileFooter.tsx`: 같은 자리에 "장바구니"·"주문조회" 를 파이프로 이어 붙임(경로는 `/m/…`)
+  - `MobileHeader.tsx`: `NAV_ITEMS` 배열에 `Cart`(`/m/cart`)·`Order Lookup`(`/m/order-lookup`)
+    두 항목 추가(기존 Shop/Archive/About/Contact/Account 와 같은 영문 톤 유지)
+  `db/migrations/`·`ops/`·`.github/workflows/`·`AGENTS.md`·`next.config.ts`·결제/주문 코드·
+  `package.json` 의존성 어느 것도 건드리지 않았다.
+  `npm run lint && npm run build` 통과(기존 `DesktopViewLink.tsx` 무관 warning 1개만 남음).
+  `npm run start` 로컬 프로덕션 서버에서 확인한 것: 데스크톱 UA 로 `/` 요청 시 HTML 에
+  `href="/cart"` 1회·`href="/order-lookup"` 1회·`href="/account"` 2회(헤더+푸터) 등장,
+  모바일 UA 로 `/m` 요청 시 `href="/m/cart"`·`href="/m/order-lookup"`·`href="/m/account"`
+  각 2회(헤더 메뉴+푸터) 등장. `/shop``/archive``/cart``/order-lookup`
+  과 `/m` 짝 여덟 라우트 전부 curl 200 유지(회귀 없음).
+  실제 브라우저(휴대폰 포함)로는 보지 않았다 — curl·정적 HTML 검증까지만 했다.
 
 ### 2026-08-27
 
