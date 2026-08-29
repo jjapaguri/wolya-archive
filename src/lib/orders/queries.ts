@@ -123,6 +123,33 @@ export const SQL_CLEAR_CART = `
   DELETE FROM cart_items WHERE cart_id = $1
 `;
 
+/** 회원 장바구니를 찾거나 만든다. 로그인 병합 경로에서만 쓴다 (`SQL_UPSERT_SESSION_CART` 와 짝). */
+export const SQL_UPSERT_USER_CART = `
+  INSERT INTO carts (user_id)
+  VALUES ($1)
+  ON CONFLICT (user_id) WHERE user_id IS NOT NULL
+  DO UPDATE SET updated_at = now()
+  RETURNING id
+`;
+
+/**
+ * 세션 장바구니 줄을 회원 장바구니로 옮긴다. 겹치는 옵션은 수량을 더하되 상한을 넘지 않는다.
+ * 재고 상한은 여기서 다시 계산하지 않는다 — 결제 시점에 DB 가 다시 검증한다 (불변규칙 2).
+ */
+export const SQL_MERGE_CART_ITEMS = `
+  INSERT INTO cart_items (cart_id, variant_id, quantity)
+  SELECT $2, variant_id, LEAST(quantity, $3::int)
+  FROM cart_items
+  WHERE cart_id = $1
+  ON CONFLICT (cart_id, variant_id)
+  DO UPDATE SET quantity = LEAST(cart_items.quantity + excluded.quantity, $3::int), updated_at = now()
+`;
+
+/** 병합 후 빈 세션 장바구니를 지운다. `cart_items` 는 FK CASCADE 로 같이 지워진다. */
+export const SQL_DELETE_CART = `
+  DELETE FROM carts WHERE id = $1
+`;
+
 // ── 주문 ────────────────────────────────────────────────────────
 
 /**

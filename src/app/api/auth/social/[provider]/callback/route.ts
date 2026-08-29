@@ -26,6 +26,8 @@ import {
   socialConfig,
 } from "@/lib/auth/social";
 import { safeNextPath } from "@/lib/auth/validation";
+import { mergeSessionCartIntoUser } from "@/lib/orders/cart";
+import { readSessionKey } from "@/lib/orders/session";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +101,9 @@ export async function GET(
     return failure("social");
   }
   await updateLastLogin(userId);
+
+  const sessionKey = await readSessionKey();
+  if (sessionKey) await mergeSessionCartIntoUser(sessionKey, userId);
 
   const response = NextResponse.redirect(`${site}${back}`);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
