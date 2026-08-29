@@ -15,10 +15,10 @@
  *    (Next 16 문서 `redirect.md` 의 "Good to know").
  *
  * ── 이 파일이 하지 않는 것 ──────────────────────────────────────
- * 장바구니·주문·결제를 건드리지 않는다. 로그인은 구매의 관문이 아니다 —
+ * 주문·결제 자체는 건드리지 않는다. 로그인은 구매의 관문이 아니다 —
  * 비회원 주문(`orders.user_id IS NULL`)은 이 코드와 무관하게 그대로 동작한다.
- * (로그인 시 세션 장바구니를 회원 장바구니로 옮기는 병합은 주문 쪽 작업이라 여기서 하지 않는다.
- *  `docs/BACKLOG.md` 에 항목으로 남겼다.)
+ * (세션 장바구니를 회원 장바구니로 옮기는 병합은 세션을 만든 직후 `mergeSessionCartIntoUser`
+ *  한 호출로만 관여한다 — 장바구니 스키마·상한 계산은 `@/lib/orders/cart` 가 정본이다.)
  */
 
 import { refresh } from "next/cache";
@@ -47,6 +47,8 @@ import {
   passwordProblem,
   safeNextPath,
 } from "@/lib/auth/validation";
+import { mergeSessionCartIntoUser } from "@/lib/orders/cart";
+import { readSessionKey } from "@/lib/orders/session";
 
 /** DB 가 없으면 인증 기능은 통째로 못 쓴다. 화면이 5xx 를 뱉는 대신 문구로 알린다. */
 const DB_DOWN_MESSAGE = "지금은 회원 기능을 쓸 수 없습니다. 잠시 후 다시 시도해 주세요.";
@@ -131,6 +133,9 @@ export async function signupAction(
     return fail("가입은 됐지만 자동 로그인에 실패했습니다. 로그인해 주세요.");
   }
 
+  const sessionKey = await readSessionKey();
+  if (sessionKey) await mergeSessionCartIntoUser(sessionKey, userId);
+
   redirect(target);
 }
 
@@ -183,6 +188,9 @@ export async function loginAction(
   } catch {
     return fail(DB_DOWN_MESSAGE);
   }
+
+  const sessionKey = await readSessionKey();
+  if (sessionKey) await mergeSessionCartIntoUser(sessionKey, userId);
 
   redirect(target);
 }

@@ -67,12 +67,12 @@
   > 필요해 동일). 열린 `auto/` PR 은 없음(`gh pr list` 결과 #32 하나뿐이고 `fix/` 브랜치라
   > 해당 없음). 이 항목은 코드가 아니라 사람의 채널 선택이 선행돼야 해 이번 실행에서
   > 착수 불가능. 실행 가능한 항목 없어 PR 없이 종료.
-
-- [ ] `review` **로그인 시 비회원 장바구니 병합 (주문 쪽 작업 — 인증 PR 이 일부러 안 건드림)**
-  `carts.session_key`(비회원)와 `carts.user_id`(회원)가 나뉘어 있어서, 담아둔 채로
-  로그인하면 세션 장바구니를 회원 장바구니로 옮기고 세션 쪽을 지워야 한다(`db/README.md`
-  3단계 요점). 이건 장바구니 스키마를 아는 쪽이 해야 해서 인증 PR 은 손대지 않았다 —
-  붙일 자리는 `src/lib/auth/actions.ts` 의 `loginAction`·소셜 콜백에서 세션을 만든 직후다.
+  > 2026-08-29 dev-loop: 재확인, 변동 없음. `package.json` dependencies 여전히
+  > `next`/`pg`/`react`/`react-dom` 뿐, `.github/workflows/` 에 메일/SMS 관련 값 여전히 0건 —
+  > 전제가 그대로라 이번에도 착수 불가능하다. 열린 `auto/` PR 없음(`gh pr list` 결과 #32
+  > 하나뿐이고 `fix/` 브랜치라 해당 없음). 같은 결론을 네 번째로 반복하는 대신 이번
+  > 실행은 그 아래(바로 다음) 항목 "로그인 시 비회원 장바구니 병합" 으로 넘어갔다 —
+  > 그 항목은 사람의 결정이 필요 없고 지금 스택만으로 완결된다. PR #33(아래 완료 참고).
 
 - [ ] `review` **이메일 변경 (내 정보에서 지금은 못 바꾼다)**
   내 정보는 이름·휴대폰·마케팅 수신만 고칠 수 있다. 이메일은 소셜 계정 연결과 주문 조회가
@@ -149,6 +149,48 @@ _(현재 없음)_
 ---
 
 ## 완료
+
+### 2026-08-29
+
+- [x] `review` **로그인 시 비회원 장바구니 병합 (주문 쪽 작업 — 인증 PR 이 일부러 안 건드림) — PR #33, 2026-08-29**
+  `carts.session_key`(비회원)와 `carts.user_id`(회원)가 나뉘어 있어서, 담아둔 채로
+  로그인하면 세션 장바구니를 회원 장바구니로 옮기고 세션 쪽을 지워야 한다(`db/README.md`
+  3단계 요점). 이건 장바구니 스키마를 아는 쪽이 해야 해서 인증 PR 은 손대지 않았다 —
+  붙일 자리는 `src/lib/auth/actions.ts` 의 `loginAction`·소셜 콜백에서 세션을 만든 직후다
+  (원문, 지우지 않고 옮김).
+
+  원문 지시 그대로 구현했다. `src/lib/orders/queries.ts` 에 `SQL_UPSERT_USER_CART`(회원
+  장바구니 find-or-create, `SQL_UPSERT_SESSION_CART` 와 짝) · `SQL_MERGE_CART_ITEMS`(세션
+  장바구니 줄을 회원 장바구니로 옮기며 겹치는 옵션은 수량을 더하되 `MAX_LINE_QUANTITY`(10)를
+  넘지 않게 `LEAST` 로 clamp) · `SQL_DELETE_CART` 세 개를 추가했다. `src/lib/orders/cart.ts`
+  에 `mergeSessionCartIntoUser(sessionKey, userId)` 를 새로 만들어 이 세 쿼리를 순서대로
+  부른다 — 세션 장바구니가 없으면 아무것도 만들지 않고 조용히 끝난다(회원 장바구니를 괜히
+  만들지 않는다). **실패해도 던지지 않는다** — 로그인 자체가 실패하면 안 되므로 병합은
+  항상 best-effort(`console.error` 로그만).
+  호출 지점 셋: `src/lib/auth/actions.ts` 의 `signupAction`(가입 즉시 로그인 케이스도 포함) ·
+  `loginAction`, `src/app/api/auth/social/[provider]/callback/route.ts` — 셋 다 세션을 만든
+  직후 `readSessionKey()` 로 쿠키를 읽어 있으면만 병합을 부른다.
+  재고 상한은 여기서 다시 계산하지 않았다 — 결제 시점에 `checkout.ts` 가 DB 값으로 다시
+  검증하므로(불변규칙 2) 병합 시점엔 `MAX_LINE_QUANTITY` 상한만 지키면 충분하다.
+  화면(컴포넌트·라우트)은 건드리지 않았다 — 순수 서버 로직이라 `/`·`/m` 어느 쪽도 화면이
+  갈라지지 않는다(장바구니·로그인 화면 자체는 기존 그대로).
+  `db/migrations/`·`ops/`·`.github/workflows/`·`AGENTS.md`·`next.config.ts`·`package.json`
+  의존성 어느 것도 건드리지 않았다. 결제 코드(`checkout.ts` 등)도 손대지 않았다 — 장바구니
+  병합은 결제 이전 단계다.
+  `npm run lint && npm run build` 통과(기존 `DesktopViewLink.tsx` 무관 warning 1개만 남음).
+  로컬 PostgreSQL 16 에 001~011 을 전부 적용해 실제로 검증한 것: 세션 장바구니(변형1 수량1,
+  변형2 수량1) + 이미 존재하는 회원 장바구니(변형1 수량9, 상한 10 바로 아래)로 시나리오를
+  만들고 `SQL_UPSERT_USER_CART`(기존 회원 장바구니 id 그대로 반환 확인) →
+  `SQL_MERGE_CART_ITEMS` → `SQL_DELETE_CART` 순서를 그대로 psql 로 실행 — 결과: 겹친 변형1
+  은 9+1=10 에서 상한 10 으로 정확히 clamp(11 이 아니라 10), 안 겹친 변형2 는 수량 1 그대로
+  회원 장바구니에 들어옴, 세션 장바구니 행은 `carts` 테이블에서 완전히 사라짐(FK CASCADE 로
+  `cart_items` 도 같이 삭제됨 확인). 세션 장바구니가 애초에 없는 경우(`SELECT id FROM carts
+  WHERE session_key = ...` 0건)도 확인 — 이 경우 앱 코드는 `findCartId` 가 `null` 을
+  돌려주는 즉시 반환하므로 회원 장바구니를 만들지 않는다.
+  실제 브라우저로 로그인·회원가입·소셜 콜백을 direct 하게 거쳐서는 확인하지 않았다 — 서버
+  함수 로직과 그 SQL 을 실제 스키마에 대고 검증하는 수준까지만 했다(마이그레이션 011 이
+  운영 DB 에 아직 적용되지 않아 로그인 화면 자체가 지금 운영에서는 안내 문구로 막혀 있는
+  것과 같은 이유 — 이 세션에는 운영 DB 접속 경로가 없다).
 
 ### 2026-08-27
 

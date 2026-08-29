@@ -15,11 +15,14 @@
 import { isDatabaseConfigured, query } from "@/lib/db";
 import {
   SQL_CART_LINES,
+  SQL_DELETE_CART,
   SQL_DELETE_CART_ITEM,
   SQL_FIND_SESSION_CART,
+  SQL_MERGE_CART_ITEMS,
   SQL_UPDATE_CART_ITEM_QTY,
   SQL_UPSERT_CART_ITEM,
   SQL_UPSERT_SESSION_CART,
+  SQL_UPSERT_USER_CART,
   SQL_VARIANTS_BY_SLUG,
 } from "@/lib/orders/queries";
 import {
@@ -297,4 +300,31 @@ export async function removeCartItem(
   if (cartId === null) return null;
   await query(SQL_DELETE_CART_ITEM, [itemId, cartId]);
   return summarize(await readCartLines(cartId));
+}
+
+/**
+ * 로그인 성공 직후 부른다. 담아둔 채로 로그인하면 세션 장바구니를 회원 장바구니로
+ * 옮기고 세션 쪽을 지운다 (003 주석의 병합 로직).
+ *
+ * **로그인 자체를 막지 않는다.** 실패해도 던지지 않고 로그만 남긴다 — 병합이 실패했다고
+ * 로그인까지 실패시키면 편의 기능(장바구니 이어붙이기) 때문에 관문(로그인)이 막히는 꼴이다.
+ * 세션 장바구니가 없으면 아무 일도 하지 않는다(회원 장바구니를 괜히 만들지 않는다).
+ */
+export async function mergeSessionCartIntoUser(sessionKey: string, userId: string): Promise<void> {
+  if (!isDatabaseConfigured()) return;
+  try {
+    const sessionCartId = await findCartId(sessionKey);
+    if (sessionCartId === null) return;
+
+    const userCartRows = await query<{ id: Num }>(SQL_UPSERT_USER_CART, [userId]);
+    const userCartId = n(userCartRows[0].id);
+
+    await query(SQL_MERGE_CART_ITEMS, [sessionCartId, userCartId, MAX_LINE_QUANTITY]);
+    await query(SQL_DELETE_CART, [sessionCartId]);
+  } catch (error) {
+    console.error(
+      "[cart] 로그인 장바구니 병합 실패:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 }
