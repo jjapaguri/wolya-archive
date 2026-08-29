@@ -10,6 +10,9 @@ const NAV_ITEMS = [
   { label: "Contact", href: "/m/contact" },
   // 데스크톱 짝은 `src/components/ContentPanel.tsx` 의 navLinks — 같이 고친다
   { label: "Account", href: "/m/account" },
+  // 데스크톱은 헤더가 아니라 푸터(`SiteFooter.tsx`)에 같은 진입점을 둔다 — 패널이 좁아서
+  { label: "Cart", href: "/m/cart" },
+  { label: "Order Lookup", href: "/m/order-lookup" },
 ];
 
 export default function MobileHeader() {

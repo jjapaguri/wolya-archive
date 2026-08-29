@@ -131,8 +131,12 @@ export default function MobileFooter() {
 
       <div className="mb-6 h-px w-full bg-fg/10" />
 
-      {/* 회원 진입점 — 데스크톱 짝은 `src/components/SiteFooter.tsx` 다. 같이 고친다 */}
-      <div className="mb-5 flex justify-center text-[9px] tracking-[0.1em] text-fg/50 uppercase">
+      {/* 회원·주문 진입점 — 데스크톱 짝은 `src/components/SiteFooter.tsx` 다. 같이 고친다 */}
+      <div className="mb-5 flex justify-center gap-4 text-[9px] tracking-[0.1em] text-fg/50 uppercase">
+        <Link href="/m/cart">장바구니</Link>
+        <span className="text-fg/20">|</span>
+        <Link href="/m/order-lookup">주문조회</Link>
+        <span className="text-fg/20">|</span>
         <Link href="/m/account">로그인 · 내 정보</Link>
       </div>
 
