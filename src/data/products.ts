@@ -485,7 +485,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 47 · 가슴 53 · 총장 68",
     tags: "#폴로 #랄프로렌 #케이블니트 #네이비 #본라인",
-    status: "preorder",
+    status: "sold",
     note: "본라인 판정은 판매글 텍스트 근거 — 매입 전 라벨 사진 확인 필요",
   },
   {
