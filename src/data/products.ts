@@ -509,7 +509,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 37 · 가슴 44 · 총장 50",
     tags: "#폴로 #랄프로렌 #가디건 #케이블니트 #연핑크",
-    status: "preorder",
+    status: "sold",
     note: "본라인 판정은 판매글 텍스트 근거 — 매입 전 라벨 사진 확인 필요",
   },
   {
@@ -906,7 +906,7 @@ export const products: Product[] = [
     kind: "bottom",
     shortMeasure: "허리 39 · 밑위 26 · 총장 97",
     tags: "#리바이스 #501 #빅E #셀비지 #USA빈티지 #데님팬츠",
-    status: "preorder",
+    status: "sold",
     note: "판매자가 허리 위쪽을 새깅 목적으로 리폼 맡겼다고 직접 기재 — 원형이 아니다. 상세페이지에 반드시 노출할 것.",
   },
   {
