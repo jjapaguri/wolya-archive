@@ -274,7 +274,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "실측 입고 후 공개",
     tags: "#칼하트 #J130 #액티브자켓 #빈티지 #M사이즈",
-    status: "preorder",
+    status: "sold",
     note: "가죽 패치에 사용감 있음.",
   },
   {
