@@ -580,7 +580,7 @@ export const products: Product[] = [
     kind: "top",
     shortMeasure: "어깨 45 · 가슴 49 · 총장 64.5",
     tags: "#네이버후드 #NEIGHBORHOOD #니트 #우라하라 #일본",
-    status: "preorder",
+    status: "sold",
   },
   {
     id: 20,
