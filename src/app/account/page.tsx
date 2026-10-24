@@ -93,6 +93,17 @@ export default async function AccountPage() {
           </h2>
           <AccountAddressBook addresses={addresses} />
         </section>
+
+        {user.role === "admin" && (
+          <section className="mt-16">
+            <h2 className="mb-6 border-b border-border pb-3 font-sans text-[11px] tracking-[0.2em] text-accent uppercase">
+              관리자 도구
+            </h2>
+            <Link href="/admin/products/new" className="text-sm text-accent underline">
+              상품 등록 SQL 생성
+            </Link>
+          </section>
+        )}
       </main>
       <SiteFooter />
     </>

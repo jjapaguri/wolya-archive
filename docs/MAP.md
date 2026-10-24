@@ -33,6 +33,8 @@ src/proxy.ts              기기 판별 → /m 리다이렉트. middleware.ts �
 src/app/                  데스크톱 라우트 — /shop /archive /about /contact /faq /product/[slug] /legal/[slug]
                           + 주문 /cart /checkout /order/[orderNo] /order-lookup
                           + 회원 /login /signup /account
+                          + 관리자 /admin/products/new (users.role='admin' 만, /m 짝 없음 —
+                          고객 화면이 아니라 운영자 내부 도구라 이중 라우트 규칙 적용 밖으로 판단)
 src/app/m/                모바일 라우트 — 데스크톱과 1:1 짝 (/m/shop /m/archive /m/about /m/contact /m/faq /m/product/[slug] /m/legal/[slug]
                           /m/cart /m/checkout /m/order/[orderNo] /m/order-lookup
                           /m/login /m/signup /m/account)
@@ -60,6 +62,9 @@ src/lib/                  ★ 화면이 상품을 읽는 곳. products.ts(조회
                           `legal-content.ts` 는 이용약관/개인정보처리방침/교환·환불 규정 텍스트
                           (데스크톱·모바일 /legal/[slug] 페이지가 같이 씀, 법률 검토 전 초안)
                           `faq-content.ts` 는 /faq, /m/faq 전체 질문/답변 목록(홈 티저보다 넓음)
+                          `product-seed-sql.ts` 는 신상품 1건 시드 SQL 생성기(pg 없음, 클라이언트도
+                          씀) — `/admin/products/new` 가 쓴다. `scripts/gen_seed_sql.mjs` 와
+                          판정 규칙(조건 등급·브랜드 slug)만 맞추고 코드는 공유하지 않는다
 src/lib/orders/           ★ 장바구니·주문. `shared.ts`(타입·검증·금액 정책 — pg 없음, 클라이언트도 씀)
                           + `queries.ts`(SQL, pg 없음) + `cart.ts`·`checkout.ts`·`lookup.ts`(서버 전용)
                           + `session.ts`(비회원 세션키 쿠키) + `order-no.ts`(주문번호 발급).
