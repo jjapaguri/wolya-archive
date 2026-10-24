@@ -177,7 +177,7 @@ export default async function MobileProductDetailPage({
         {product.note && (
           <div className="word-keep-all mt-5 border-t border-fg/10 pt-4 font-kr text-[11px] leading-[1.5] text-fg/50">
             <strong className="mb-1 block text-[10px] font-medium tracking-[0.1em] text-fg/70 uppercase">
-              판매자 고지
+              이 옷에 대해 알아두실 것
             </strong>
             {product.note}
           </div>

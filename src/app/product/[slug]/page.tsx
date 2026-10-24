@@ -181,7 +181,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/product/
             {product.note && (
               <div className="word-keep-all mt-6 border-t border-border pt-4 font-kr text-[12px] leading-[1.6] text-fg/50">
                 <strong className="mb-1 block text-[10px] font-medium tracking-[0.1em] text-fg/70 uppercase">
-                  판매자 고지
+                  이 옷에 대해 알아두실 것
                 </strong>
                 {product.note}
               </div>
